@@ -75,6 +75,12 @@ class IsolateManager {
             case 'compressLog':
               result = await _compressLog(data);
               break;
+            case 'formatDatadogLog':
+              result = await _formatDatadogLog(data);
+              break;
+            case 'formatNewRelicLog':
+              result = await _formatNewRelicLog(data);
+              break;
             default:
               result = {'error': 'Unknown task: $task'};
           }
@@ -99,9 +105,6 @@ class IsolateManager {
     final timestamp = logData['timestamp'] as DateTime;
     final context = logData['context'] as Map<String, dynamic>?;
 
-    // Simulate heavy formatting work
-    await Future.delayed(const Duration(milliseconds: 10));
-
     return {
       'formatted': '[$timestamp] [$level] $message',
       'structured': {
@@ -115,9 +118,6 @@ class IsolateManager {
 
   /// Serializes data in isolate
   static Future<String> _serializeData(dynamic data) async {
-    // Simulate heavy serialization work
-    await Future.delayed(const Duration(milliseconds: 5));
-
     // Simple JSON-like serialization
     if (data is Map) {
       return data.entries.map((e) => '${e.key}: ${e.value}').join(', ');
@@ -127,9 +127,6 @@ class IsolateManager {
 
   /// Compresses log data in isolate
   static Future<Map<String, dynamic>> _compressLog(dynamic data) async {
-    // Simulate compression work
-    await Future.delayed(const Duration(milliseconds: 15));
-
     final logData = data as Map<String, dynamic>;
     return {
       'compressed': true,
@@ -137,6 +134,149 @@ class IsolateManager {
       'compressedSize': (logData.toString().length * 0.7).round(),
       'data': logData,
     };
+  }
+
+  /// Formats a Datadog log entry in isolate
+  static Future<Map<String, dynamic>> _formatDatadogLog(dynamic data) async {
+    final logData = data as Map<String, dynamic>;
+    final timestamp = logData['timestamp'] as String;
+    final level = logData['level'] as String;
+    final message = logData['message'] as String;
+    final service = logData['service'] as String;
+    final env = logData['env'] as String;
+    final host = logData['host'] as String?;
+    final source = logData['source'] as String?;
+    final tags = logData['tags'] as String?;
+    final event = logData['event'] as Map<String, dynamic>?;
+    final stackTrace = logData['stackTrace'] as String?;
+
+    final logEntry = <String, dynamic>{
+      'timestamp': timestamp,
+      'status': _mapLogLevelToDatadogStatus(level),
+      'message': message,
+      'service': service,
+      'env': env,
+      'level': level,
+    };
+
+    if (host != null) logEntry['host'] = host;
+    if (source != null) logEntry['source'] = source;
+    if (tags != null) logEntry['tags'] = tags;
+
+    // Add event information
+    if (event != null) {
+      logEntry['event'] = event;
+      logEntry['event_name'] = event['eventName'];
+      if (event['eventMessage'] != null) {
+        logEntry['event_message'] = event['eventMessage'];
+      }
+      if (event['parameters'] != null && (event['parameters'] as Map).isNotEmpty) {
+        logEntry['parameters'] = event['parameters'];
+      }
+    }
+
+    // Add stack trace for errors
+    if (stackTrace != null) {
+      logEntry['stack_trace'] = stackTrace;
+    }
+
+    // Add additional metadata
+    logEntry['dd'] = {
+      'trace_id': _generateTraceId(),
+      'span_id': _generateSpanId(),
+    };
+
+    return logEntry;
+  }
+
+  /// Formats a New Relic log entry in isolate
+  static Future<Map<String, dynamic>> _formatNewRelicLog(dynamic data) async {
+    final logData = data as Map<String, dynamic>;
+    final timestamp = logData['timestamp'] as String;
+    final level = logData['level'] as String;
+    final message = logData['message'] as String;
+    final appName = logData['appName'] as String;
+    final host = logData['host'] as String?;
+    final environment = logData['environment'] as String?;
+    final event = logData['event'] as Map<String, dynamic>?;
+    final stackTrace = logData['stackTrace'] as String?;
+
+    final parsedTimestamp = DateTime.parse(timestamp);
+    final logEntry = <String, dynamic>{
+      'timestamp': parsedTimestamp.millisecondsSinceEpoch,
+      'level': _mapLogLevelToNewRelic(level),
+      'message': message,
+      'appName': appName,
+    };
+
+    if (host != null) logEntry['host'] = host;
+    if (environment != null) logEntry['environment'] = environment;
+
+    // Add event information
+    if (event != null) {
+      logEntry['event'] = event;
+      logEntry['eventName'] = event['eventName'];
+      if (event['eventMessage'] != null) {
+        logEntry['eventMessage'] = event['eventMessage'];
+      }
+      if (event['parameters'] != null && (event['parameters'] as Map).isNotEmpty) {
+        logEntry['attributes'] = event['parameters'];
+      }
+    }
+
+    // Add stack trace for errors
+    if (stackTrace != null) {
+      logEntry['stackTrace'] = stackTrace;
+    }
+
+    // Add New Relic specific metadata
+    logEntry['entity'] = {'name': appName, 'type': 'APPLICATION'};
+
+    return logEntry;
+  }
+
+  /// Maps log level to Datadog status
+  static String _mapLogLevelToDatadogStatus(String level) {
+    switch (level) {
+      case 'debug':
+      case 'info':
+        return 'info';
+      case 'warning':
+        return 'warn';
+      case 'error':
+      case 'fatal':
+        return 'error';
+      default:
+        return 'info';
+    }
+  }
+
+  /// Maps log level to New Relic level
+  static String _mapLogLevelToNewRelic(String level) {
+    switch (level) {
+      case 'debug':
+        return 'DEBUG';
+      case 'info':
+        return 'INFO';
+      case 'warning':
+        return 'WARN';
+      case 'error':
+        return 'ERROR';
+      case 'fatal':
+        return 'FATAL';
+      default:
+        return 'INFO';
+    }
+  }
+
+  /// Generates a trace ID
+  static String _generateTraceId() {
+    return DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+  }
+
+  /// Generates a span ID
+  static String _generateSpanId() {
+    return DateTime.now().microsecondsSinceEpoch.toRadixString(36);
   }
 
   /// Executes a task in an available isolate
