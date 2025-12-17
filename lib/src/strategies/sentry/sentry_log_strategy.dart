@@ -44,12 +44,10 @@ class SentryLogStrategy extends LogStrategy {
           context.addAll(entry.event!.parameters!);
         }
 
-        // Add context to Sentry
+        // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
           Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setExtra(key, value);
-            });
+            scope.setContexts('log_context', context);
           });
         }
 
@@ -96,12 +94,10 @@ class SentryLogStrategy extends LogStrategy {
           context.addAll(entry.event!.parameters!);
         }
 
-        // Add context to Sentry
+        // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
           Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setExtra(key, value);
-            });
+            scope.setContexts('log_context', context);
           });
         }
 
@@ -133,12 +129,10 @@ class SentryLogStrategy extends LogStrategy {
           context.addAll(entry.event!.parameters!);
         }
 
-        // Add context to Sentry
+        // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
           Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setExtra(key, value);
-            });
+            scope.setContexts('log_context', context);
           });
         }
 
