@@ -269,7 +269,7 @@ class StrategicLogger {
   Future<void> log(
     dynamic message, {
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -295,7 +295,7 @@ class StrategicLogger {
   Future<void> info(
     dynamic message, {
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -323,7 +323,7 @@ class StrategicLogger {
     dynamic error, {
     StackTrace? stackTrace,
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -352,7 +352,7 @@ class StrategicLogger {
     dynamic error, {
     StackTrace? stackTrace,
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -475,7 +475,7 @@ class StrategicLogger {
   Future<void> debug(
     dynamic message, {
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -495,7 +495,7 @@ class StrategicLogger {
   Future<void> warning(
     dynamic message, {
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
       throw NotInitializedError();
@@ -515,7 +515,7 @@ class StrategicLogger {
   Future<void> verbose(
     dynamic message, {
     LogEvent? event,
-    Map<String, Object>? context,
+    Map<String, dynamic>? context,
   }) async {
     await debug(message, event: event, context: context);
   }

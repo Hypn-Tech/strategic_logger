@@ -33,6 +33,21 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
     super.supportedEvents,
   });
 
+  /// Helper method to convert context to Firebase Analytics compatible parameters
+  Map<String, Object> _convertContextToParameters(Map<String, dynamic> context) {
+    final parameters = <String, Object>{};
+    context.forEach((key, value) {
+      // Firebase Analytics accepts most primitive types
+      if (value is String || value is num || value is bool || value is List || value is Map) {
+        parameters[key] = value as Object;
+      } else {
+        // Convert other types to string
+        parameters[key] = value.toString();
+      }
+    });
+    return parameters;
+  }
+
   /// Logs a message or a structured event to Firebase Analytics, facilitating broad and detailed analytics.
   ///
   /// [message] - The general message to log if no specific event is provided. Treated as the event name in Firebase.
@@ -57,15 +72,7 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           
           if (context != null && context.isNotEmpty) {
             // Convert context values to Object type for Firebase Analytics
-            context.forEach((key, value) {
-              // Firebase Analytics accepts most primitive types
-              if (value is String || value is num || value is bool || value is List || value is Map) {
-                parameters[key] = value as Object;
-              } else {
-                // Convert other types to string
-                parameters[key] = value.toString();
-              }
-            });
+            parameters.addAll(_convertContextToParameters(context));
           }
           
           await _analytics.logEvent(
@@ -134,13 +141,7 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           
           // Add context to parameters with type conversion
           if (context != null && context.isNotEmpty) {
-            context.forEach((key, value) {
-              if (value is String || value is num || value is bool || value is List || value is Map) {
-                parameters[key] = value as Object;
-              } else {
-                parameters[key] = value.toString();
-              }
-            });
+            parameters.addAll(_convertContextToParameters(context));
           }
           
           await _analytics.logEvent(
@@ -151,14 +152,7 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           // Even without event, add context if available
           Map<String, Object>? parameters;
           if (context != null && context.isNotEmpty) {
-            parameters = <String, Object>{};
-            context.forEach((key, value) {
-              if (value is String || value is num || value is bool || value is List || value is Map) {
-                parameters![key] = value as Object;
-              } else {
-                parameters![key] = value.toString();
-              }
-            });
+            parameters = _convertContextToParameters(context);
           }
           await _analytics.logEvent(name: '$error', parameters: parameters);
         }
@@ -199,13 +193,7 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           
           // Add context to parameters with type conversion
           if (context != null && context.isNotEmpty) {
-            context.forEach((key, value) {
-              if (value is String || value is num || value is bool || value is List || value is Map) {
-                parameters[key] = value as Object;
-              } else {
-                parameters[key] = value.toString();
-              }
-            });
+            parameters.addAll(_convertContextToParameters(context));
           }
           
           await _analytics.logEvent(
@@ -216,14 +204,7 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           // Even without event, add context if available
           Map<String, Object>? parameters;
           if (context != null && context.isNotEmpty) {
-            parameters = <String, Object>{};
-            context.forEach((key, value) {
-              if (value is String || value is num || value is bool || value is List || value is Map) {
-                parameters![key] = value as Object;
-              } else {
-                parameters![key] = value.toString();
-              }
-            });
+            parameters = _convertContextToParameters(context);
           }
           await _analytics.logEvent(name: 'FATAL: $error', parameters: parameters);
         }
