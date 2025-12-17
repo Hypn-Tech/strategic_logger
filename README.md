@@ -830,7 +830,7 @@ await logger.initialize(
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Code of Conduct](CODE_OF_CONDUCT.md) for community guidelines.
 
 ### Development Setup
 
@@ -878,25 +878,17 @@ Strategic Logger is released under the **MIT License**. See [LICENSE](LICENSE) f
 - [API Documentation](https://pub.dev/documentation/strategic_logger/latest/) - Complete API reference
 - [Examples](example/) - Ready-to-use code examples
 - [Changelog](CHANGELOG.md) - Version history and updates
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 
 ### 🎓 **Learning Resources**
-- [MCP Integration Guide](docs/mcp-integration.md) - Complete MCP setup and usage
-- [AI-Powered Logging](docs/ai-logging.md) - AI features and best practices
-- [Performance Optimization](docs/performance.md) - Performance tuning guide
-- [Migration Guide](docs/migration.md) - Upgrading from other loggers
-
-### 🔧 **Tools & Integrations**
-- [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=strategic-logger) - IDE integration
-- [Flutter Inspector](docs/flutter-inspector.md) - Debug integration
-- [CI/CD Templates](docs/ci-cd.md) - GitHub Actions, GitLab CI examples
-- [Docker Images](docs/docker.md) - Container deployment guide
+- [API Documentation](https://pub.dev/documentation/strategic_logger/latest/) - Complete API reference
+- [Examples](example/) - Ready-to-use code examples
+- [Changelog](CHANGELOG.md) - Version history and updates
+- [Contributing Guide](CODE_OF_CONDUCT.md) - Code of conduct
 
 ### 🌟 **Community**
-- [GitHub Discussions](https://github.com/Hypn-Tech/strategic_logger/discussions) - Community support
-- [Discord Server](https://discord.gg/strategic-logger) - Real-time chat
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/strategic-logger) - Q&A support
-- [Reddit Community](https://reddit.com/r/strategic_logger) - Discussions and news
+- [GitHub Issues](https://github.com/Hypn-Tech/strategic_logger/issues) - Report bugs and request features
+- [GitHub Repository](https://github.com/Hypn-Tech/strategic_logger) - Source code and contributions
 
 ---
 
@@ -906,29 +898,8 @@ Strategic Logger is released under the **MIT License**. See [LICENSE](LICENSE) f
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Hypn-Tech/strategic_logger)
 [![Pub](https://img.shields.io/badge/Pub-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://pub.dev/packages/strategic_logger)
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/strategic_logger)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/company/strategic-logger)
 
 ---
 
-### 🏆 **Awards & Recognition**
-
-- 🥇 **Best Flutter Package 2024** - Flutter Community Awards
-- 🚀 **Top Trending Package** - pub.dev Trending
-- ⭐ **5,000+ GitHub Stars** - Community Favorite
-- 📈 **10,000+ Downloads** - Growing Fast
-
-### 📊 **Package Statistics**
-
-- **Version**: 1.3.0
-- **Downloads**: 10,000+
-- **GitHub Stars**: 5,000+
-- **Contributors**: 50+
-- **Issues Resolved**: 200+
-- **Test Coverage**: 85%+
-
-### 🔍 **Keywords & Tags**
-
-`flutter` `dart` `logging` `logger` `mcp` `model-context-protocol` `ai` `artificial-intelligence` `machine-learning` `performance` `isolates` `multi-threading` `console` `firebase` `crashlytics` `sentry` `datadog` `newrelic` `monitoring` `analytics` `debugging` `error-tracking` `structured-logging` `async` `streaming` `real-time` `enterprise` `production` `optimization` `memory-management` `object-pooling` `compression` `batch-processing` `retry-logic` `health-monitoring` `metrics` `insights` `anomaly-detection` `predictive-analytics` `natural-language` `webhook` `api` `http` `websocket` `json` `serialization` `type-safety` `null-safety` `hot-reload` `cross-platform` `mobile` `web` `desktop` `ios` `android` `windows` `macos` `linux` `docker` `kubernetes` `microservices` `serverless` `cloud` `devops` `ci-cd` `testing` `integration` `unit-testing` `performance-testing` `stress-testing` `regression-testing` `coverage` `documentation` `examples` `tutorials` `best-practices` `migration` `compatibility` `drop-in-replacement` `zero-configuration` `easy-setup` `developer-friendly` `production-ready` `enterprise-grade` `scalable` `reliable` `secure` `maintainable` `extensible` `customizable` `flexible` `powerful` `modern` `cutting-edge` `innovative` `revolutionary` `game-changing` `industry-leading` `award-winning` `community-driven` `open-source` `mit-license` `free` `premium-support` `commercial-use` `hypn-tech` `sponsored` `maintained` `active-development` `regular-updates` `responsive-support` `community-support` `professional-support` `enterprise-support`
 
 </div>

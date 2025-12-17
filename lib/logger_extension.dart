@@ -1,16 +1,3 @@
-///
-/// Strategic Logger Extensions - Additional functionality for Strategic Logger
-///
-/// This library provides extension methods and additional utilities for the Strategic Logger package.
-// Library name removed - not necessary
-
-/// This library exposes the core functionalities and base classes required for developers
-/// to create and integrate new log strategies. It is ideal for developers looking to implement
-/// customized logging behavior or to integrate with logging platforms not supported out of the box.
-
-/// Core logger class that manages the logging operations.
-/// This class can be utilized to understand the fundamental logging mechanism and to
-/// ensure compatibility with custom log strategies.
 export 'src/strategic_logger.dart';
 
 /// Base class for all log strategies.
