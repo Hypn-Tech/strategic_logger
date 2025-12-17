@@ -18,6 +18,9 @@ class IsolateManager {
   factory IsolateManager() => _instance;
   IsolateManager._internal();
 
+  // Static random instance for ID generation
+  static final Random _random = Random();
+
   final List<Isolate> _isolates = [];
   final List<ReceivePort> _ports = [];
   final Queue<Completer> _availableIsolates = Queue<Completer>();
@@ -282,7 +285,7 @@ class IsolateManager {
   static String _generateTraceId() {
     final now = DateTime.now();
     final millis = now.millisecondsSinceEpoch;
-    final random = Random().nextInt(0xFFFFFF); // Add random component
+    final random = _random.nextInt(0xFFFFFF); // Add random component
     return '${millis.toRadixString(36)}${random.toRadixString(36)}';
   }
 
@@ -290,7 +293,7 @@ class IsolateManager {
   static String _generateSpanId() {
     final now = DateTime.now();
     final micros = now.microsecondsSinceEpoch;
-    final random = Random().nextInt(0xFFFF); // Add random component
+    final random = _random.nextInt(0xFFFF); // Add random component
     return '${micros.toRadixString(36)}${random.toRadixString(36)}';
   }
 
