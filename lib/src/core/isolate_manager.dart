@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer' as developer;
 import 'dart:isolate';
 import 'dart:math';
 
@@ -213,8 +214,13 @@ class IsolateManager {
     DateTime parsedTimestamp;
     try {
       parsedTimestamp = DateTime.parse(timestamp);
-    } on FormatException {
-      // Fallback to current time if parsing fails
+    } on FormatException catch (e) {
+      // Log parsing failure and fallback to current time
+      developer.log(
+        'Failed to parse timestamp "$timestamp": ${e.message}. Using current time as fallback.',
+        name: 'IsolateManager',
+        level: 900, // WARNING level
+      );
       parsedTimestamp = DateTime.now().toUtc();
     }
 
