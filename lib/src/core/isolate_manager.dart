@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:meta/meta.dart';
 
@@ -281,18 +282,16 @@ class IsolateManager {
   static String _generateTraceId() {
     final now = DateTime.now();
     final millis = now.millisecondsSinceEpoch;
-    final micros = now.microsecondsSinceEpoch % 1000000;
-    // Combine milliseconds and microseconds for uniqueness
-    return '${millis.toRadixString(36)}${micros.toRadixString(36)}';
+    final random = Random().nextInt(0xFFFFFF); // Add random component
+    return '${millis.toRadixString(36)}${random.toRadixString(36)}';
   }
 
   /// Generates a span ID with better uniqueness
   static String _generateSpanId() {
     final now = DateTime.now();
     final micros = now.microsecondsSinceEpoch;
-    final nanos = (micros * 1000) % 1000000000;
-    // Combine microseconds and a pseudo-nano component for uniqueness
-    return '${micros.toRadixString(36)}${nanos.toRadixString(36)}';
+    final random = Random().nextInt(0xFFFF); // Add random component
+    return '${micros.toRadixString(36)}${random.toRadixString(36)}';
   }
 
   /// Executes a task in an available isolate
