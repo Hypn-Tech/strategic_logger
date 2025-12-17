@@ -209,7 +209,7 @@ class IsolateManager {
     DateTime parsedTimestamp;
     try {
       parsedTimestamp = DateTime.parse(timestamp);
-    } catch (e) {
+    } on FormatException {
       // Fallback to current time if parsing fails
       parsedTimestamp = DateTime.now().toUtc();
     }
