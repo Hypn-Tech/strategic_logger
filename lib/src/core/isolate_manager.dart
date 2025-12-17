@@ -201,7 +201,15 @@ class IsolateManager {
     final event = logData['event'] as Map<String, dynamic>?;
     final stackTrace = logData['stackTrace'] as String?;
 
-    final parsedTimestamp = DateTime.parse(timestamp);
+    // Parse timestamp with error handling
+    DateTime parsedTimestamp;
+    try {
+      parsedTimestamp = DateTime.parse(timestamp);
+    } catch (e) {
+      // Fallback to current time if parsing fails
+      parsedTimestamp = DateTime.now().toUtc();
+    }
+
     final logEntry = <String, dynamic>{
       'timestamp': parsedTimestamp.millisecondsSinceEpoch,
       'level': _mapLogLevelToNewRelic(level),
@@ -269,14 +277,22 @@ class IsolateManager {
     }
   }
 
-  /// Generates a trace ID
+  /// Generates a trace ID with better uniqueness
   static String _generateTraceId() {
-    return DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+    final now = DateTime.now();
+    final millis = now.millisecondsSinceEpoch;
+    final micros = now.microsecondsSinceEpoch % 1000000;
+    // Combine milliseconds and microseconds for uniqueness
+    return '${millis.toRadixString(36)}${micros.toRadixString(36)}';
   }
 
-  /// Generates a span ID
+  /// Generates a span ID with better uniqueness
   static String _generateSpanId() {
-    return DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final now = DateTime.now();
+    final micros = now.microsecondsSinceEpoch;
+    final nanos = (micros * 1000) % 1000000000;
+    // Combine microseconds and a pseudo-nano component for uniqueness
+    return '${micros.toRadixString(36)}${nanos.toRadixString(36)}';
   }
 
   /// Executes a task in an available isolate
