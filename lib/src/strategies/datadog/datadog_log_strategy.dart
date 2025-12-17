@@ -17,6 +17,7 @@ import '../log_strategy.dart';
 ///
 /// Features:
 /// - HTTP-based log transmission to Datadog
+/// - GZIP compression for reduced network overhead
 /// - Structured logging with metadata
 /// - Batch processing for efficiency
 /// - Error handling and retry logic
@@ -57,7 +58,7 @@ class DatadogLogStrategy extends LogStrategy {
   /// [host] - Host name (optional)
   /// [source] - Source name (optional)
   /// [tags] - Additional tags (optional)
-  /// [datadogUrl] - Datadog API URL (defaults to US region)
+  /// [datadogUrl] - Datadog API URL (defaults to US region V2 API)
   /// [batchSize] - Number of logs to batch before sending
   /// [batchTimeout] - Maximum time to wait before sending batch
   /// [maxRetries] - Maximum number of retry attempts
@@ -71,7 +72,7 @@ class DatadogLogStrategy extends LogStrategy {
     this.host,
     this.source,
     this.tags,
-    this.datadogUrl = 'https://http-intake.logs.datadoghq.com/v1/input',
+    this.datadogUrl = 'https://http-intake.logs.datadoghq.com/api/v2/logs',
     this.batchSize = 100,
     this.batchTimeout = const Duration(seconds: 5),
     this.maxRetries = 3,
@@ -319,11 +320,13 @@ class DatadogLogStrategy extends LogStrategy {
 
     // Set headers
     request.headers.set('Content-Type', 'application/json');
+    request.headers.set('Content-Encoding', 'gzip');
     request.headers.set('DD-API-KEY', apiKey);
 
-    // Set body
+    // Compress the body using GZIP
     final body = jsonEncode(batch);
-    request.write(body);
+    final compressedBody = gzip.encode(utf8.encode(body));
+    request.add(compressedBody);
 
     final response = await request.close();
 
