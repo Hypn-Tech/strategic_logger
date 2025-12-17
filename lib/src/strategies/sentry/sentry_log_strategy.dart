@@ -31,9 +31,8 @@ class SentryLogStrategy extends LogStrategy {
   Future<void> _setContextToSentry(Map<String, dynamic> context) async {
     if (context.isNotEmpty) {
       await Sentry.configureScope((scope) {
-        context.forEach((key, value) {
-          scope.setContexts(key, value);
-        });
+        // Set the entire context as a custom context with a key
+        scope.setContexts('custom', context);
       });
     }
   }
