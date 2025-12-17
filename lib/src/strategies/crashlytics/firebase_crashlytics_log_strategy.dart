@@ -31,6 +31,18 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
     super.supportedEvents,
   });
 
+  /// Helper method to set custom keys from context
+  Future<void> _setCustomKeysFromContext(Map<String, dynamic> context) async {
+    if (context.isNotEmpty) {
+      for (var entry in context.entries) {
+        await FirebaseCrashlytics.instance.setCustomKey(
+          entry.key,
+          entry.value.toString(),
+        );
+      }
+    }
+  }
+
   /// Logs a message or a structured event to Firebase Crashlytics.
   ///
   /// If an event is provided, the log will include structured data tailored for Firebase Crashlytics.
@@ -50,12 +62,7 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
         
         // Set context as custom keys if provided
         if (context != null && context.isNotEmpty) {
-          for (var entry in context.entries) {
-            await FirebaseCrashlytics.instance.setCustomKey(
-              entry.key,
-              entry.value.toString(),
-            );
-          }
+          await _setCustomKeysFromContext(context);
         }
         
         if (event != null) {
@@ -125,12 +132,7 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
         
         // Set context as custom keys if provided
         if (context != null && context.isNotEmpty) {
-          for (var entry in context.entries) {
-            await FirebaseCrashlytics.instance.setCustomKey(
-              entry.key,
-              entry.value.toString(),
-            );
-          }
+          await _setCustomKeysFromContext(context);
         }
         
         if (event != null && event is FirebaseCrashlyticsLogEvent) {
@@ -178,12 +180,7 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
         
         // Set context as custom keys if provided
         if (context != null && context.isNotEmpty) {
-          for (var entry in context.entries) {
-            await FirebaseCrashlytics.instance.setCustomKey(
-              entry.key,
-              entry.value.toString(),
-            );
-          }
+          await _setCustomKeysFromContext(context);
         }
         
         if (event != null && event is FirebaseCrashlyticsLogEvent) {

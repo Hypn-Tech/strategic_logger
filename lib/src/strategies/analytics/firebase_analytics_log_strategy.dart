@@ -56,7 +56,16 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
               : <String, Object>{};
           
           if (context != null && context.isNotEmpty) {
-            parameters.addAll(context);
+            // Convert context values to Object type for Firebase Analytics
+            context.forEach((key, value) {
+              // Firebase Analytics accepts most primitive types
+              if (value is String || value is num || value is bool || value is List || value is Map) {
+                parameters[key] = value as Object;
+              } else {
+                // Convert other types to string
+                parameters[key] = value.toString();
+              }
+            });
           }
           
           await _analytics.logEvent(
@@ -123,9 +132,15 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
             'param_event_type': analyticsEvent.eventName,
           };
           
-          // Add context to parameters
+          // Add context to parameters with type conversion
           if (context != null && context.isNotEmpty) {
-            parameters.addAll(context);
+            context.forEach((key, value) {
+              if (value is String || value is num || value is bool || value is List || value is Map) {
+                parameters[key] = value as Object;
+              } else {
+                parameters[key] = value.toString();
+              }
+            });
           }
           
           await _analytics.logEvent(
@@ -136,7 +151,14 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           // Even without event, add context if available
           Map<String, Object>? parameters;
           if (context != null && context.isNotEmpty) {
-            parameters = Map<String, Object>.from(context);
+            parameters = <String, Object>{};
+            context.forEach((key, value) {
+              if (value is String || value is num || value is bool || value is List || value is Map) {
+                parameters![key] = value as Object;
+              } else {
+                parameters![key] = value.toString();
+              }
+            });
           }
           await _analytics.logEvent(name: '$error', parameters: parameters);
         }
@@ -175,9 +197,15 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
             'param_event_type': analyticsEvent.eventName,
           };
           
-          // Add context to parameters
+          // Add context to parameters with type conversion
           if (context != null && context.isNotEmpty) {
-            parameters.addAll(context);
+            context.forEach((key, value) {
+              if (value is String || value is num || value is bool || value is List || value is Map) {
+                parameters[key] = value as Object;
+              } else {
+                parameters[key] = value.toString();
+              }
+            });
           }
           
           await _analytics.logEvent(
@@ -188,7 +216,14 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
           // Even without event, add context if available
           Map<String, Object>? parameters;
           if (context != null && context.isNotEmpty) {
-            parameters = Map<String, Object>.from(context);
+            parameters = <String, Object>{};
+            context.forEach((key, value) {
+              if (value is String || value is num || value is bool || value is List || value is Map) {
+                parameters![key] = value as Object;
+              } else {
+                parameters![key] = value.toString();
+              }
+            });
           }
           await _analytics.logEvent(name: 'FATAL: $error', parameters: parameters);
         }

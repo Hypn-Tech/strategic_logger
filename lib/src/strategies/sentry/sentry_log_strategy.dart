@@ -27,6 +27,17 @@ class SentryLogStrategy extends LogStrategy {
   /// [supportedEvents] optionally specifies which types of [LogEvent] this strategy should handle.
   SentryLogStrategy({super.logLevel = LogLevel.none, super.supportedEvents});
 
+  /// Helper method to set context to Sentry scope
+  Future<void> _setContextToSentry(Map<String, dynamic> context) async {
+    if (context.isNotEmpty) {
+      await Sentry.configureScope((scope) {
+        context.forEach((key, value) {
+          scope.setContexts(key, value);
+        });
+      });
+    }
+  }
+
   /// Logs a message or a structured event to Sentry.
   ///
   /// If an event is provided, the log will include structured data tailored for Sentry.
@@ -43,11 +54,7 @@ class SentryLogStrategy extends LogStrategy {
         
         // Add context to Sentry scope if provided
         if (context != null && context.isNotEmpty) {
-          await Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setContexts(key, value);
-            });
-          });
+          await _setContextToSentry(context);
         }
         
         if (event != null && event is SentryLogEvent) {
@@ -110,11 +117,7 @@ class SentryLogStrategy extends LogStrategy {
         
         // Add context to Sentry scope if provided
         if (context != null && context.isNotEmpty) {
-          await Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setContexts(key, value);
-            });
-          });
+          await _setContextToSentry(context);
         }
         
         await Sentry.captureException(error, stackTrace: stackTrace);
@@ -154,11 +157,7 @@ class SentryLogStrategy extends LogStrategy {
         
         // Add context to Sentry scope if provided
         if (context != null && context.isNotEmpty) {
-          await Sentry.configureScope((scope) {
-            context.forEach((key, value) {
-              scope.setContexts(key, value);
-            });
-          });
+          await _setContextToSentry(context);
         }
         
         await Sentry.captureException(error, stackTrace: stackTrace);
