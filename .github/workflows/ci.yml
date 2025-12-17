@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
     name: Analyze and Format
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -32,6 +37,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Run Tests
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -57,6 +64,8 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
