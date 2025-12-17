@@ -20,6 +20,10 @@ class IsolateManager {
 
   // Static random instance for ID generation
   static final Random _random = Random();
+  
+  // Constants for random ID generation
+  static const int _maxTraceRandomValue = 0xFFFFFF;  // 16777215
+  static const int _maxSpanRandomValue = 0xFFFF;     // 65535
 
   final List<Isolate> _isolates = [];
   final List<ReceivePort> _ports = [];
@@ -285,7 +289,7 @@ class IsolateManager {
   static String _generateTraceId() {
     final now = DateTime.now();
     final millis = now.millisecondsSinceEpoch;
-    final random = _random.nextInt(0xFFFFFF); // Add random component
+    final random = _random.nextInt(_maxTraceRandomValue);
     return '${millis.toRadixString(36)}${random.toRadixString(36)}';
   }
 
@@ -293,7 +297,7 @@ class IsolateManager {
   static String _generateSpanId() {
     final now = DateTime.now();
     final micros = now.microsecondsSinceEpoch;
-    final random = _random.nextInt(0xFFFF); // Add random component
+    final random = _random.nextInt(_maxSpanRandomValue);
     return '${micros.toRadixString(36)}${random.toRadixString(36)}';
   }
 
