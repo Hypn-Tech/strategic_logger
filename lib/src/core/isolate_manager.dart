@@ -290,7 +290,7 @@ class IsolateManager {
     final now = DateTime.now();
     final millis = now.millisecondsSinceEpoch;
     final random = _random.nextInt(_maxTraceRandomValue);
-    return '${millis.toRadixString(36)}${random.toRadixString(36)}';
+    return '${millis.toRadixString(36)}-${random.toRadixString(36)}';
   }
 
   /// Generates a span ID with better uniqueness
@@ -298,7 +298,7 @@ class IsolateManager {
     final now = DateTime.now();
     final micros = now.microsecondsSinceEpoch;
     final random = _random.nextInt(_maxSpanRandomValue);
-    return '${micros.toRadixString(36)}${random.toRadixString(36)}';
+    return '${micros.toRadixString(36)}-${random.toRadixString(36)}';
   }
 
   /// Executes a task in an available isolate
