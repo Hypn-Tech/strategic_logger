@@ -34,15 +34,26 @@ class SentryLogStrategy extends LogStrategy {
   ///
   /// [message] - a general message to log if no event is provided.
   /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
       if (shouldLog(event: event)) {
         developer.log('Logging to Sentry', name: 'SentryLogStrategy');
+        
+        // Add context to Sentry scope if provided
+        if (context != null && context.isNotEmpty) {
+          await Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setContexts(key, value);
+            });
+          });
+        }
+        
         if (event != null && event is SentryLogEvent) {
-          Sentry.captureMessage('${event.eventName}: ${event.eventMessage}');
+          await Sentry.captureMessage('${event.eventName}: ${event.eventMessage}');
         } else {
-          Sentry.captureMessage('Message: $message');
+          await Sentry.captureMessage('Message: $message');
         }
       }
     } catch (e, stack) {
@@ -62,10 +73,11 @@ class SentryLogStrategy extends LogStrategy {
   ///
   /// [message] - a general message to log if no event is provided.
   /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
-      log(message: message, event: event);
+      await log(message: message, event: event, context: context);
     } catch (e, stack) {
       developer.log(
         'Error during logging in Sentry Strategy',
@@ -84,18 +96,28 @@ class SentryLogStrategy extends LogStrategy {
   /// [error] - the error to log.
   /// [stackTrace] - the stack trace associated with the error.
   /// [event] - an optional [LogEvent] providing additional context for the error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> error({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (shouldLog(event: event)) {
         developer.log('Reporting error to Sentry', name: 'SentryLogStrategy');
-        if (event != null) {
-          Sentry.captureException(error, stackTrace: stackTrace);
+        
+        // Add context to Sentry scope if provided
+        if (context != null && context.isNotEmpty) {
+          await Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setContexts(key, value);
+            });
+          });
         }
+        
+        await Sentry.captureException(error, stackTrace: stackTrace);
       }
     } catch (e, stack) {
       developer.log(
@@ -115,11 +137,13 @@ class SentryLogStrategy extends LogStrategy {
   /// [error] - the critical error to log.
   /// [stackTrace] - the stack trace associated with the critical error.
   /// [event] - an optional [LogEvent] providing additional context for the critical error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> fatal({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (shouldLog(event: event)) {
@@ -127,9 +151,17 @@ class SentryLogStrategy extends LogStrategy {
           'Recording fatal error to Sentry',
           name: 'SentryLogStrategy',
         );
-        if (event != null) {
-          Sentry.captureException(error, stackTrace: stackTrace);
+        
+        // Add context to Sentry scope if provided
+        if (context != null && context.isNotEmpty) {
+          await Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setContexts(key, value);
+            });
+          });
         }
+        
+        await Sentry.captureException(error, stackTrace: stackTrace);
       }
     } catch (e, stack) {
       developer.log(

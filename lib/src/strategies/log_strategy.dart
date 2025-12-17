@@ -47,27 +47,31 @@ abstract class LogStrategy {
   ///
   /// [message] - The message or data to log.
   /// [event] - Optional. The specific log event associated with the message.
-  Future<void> log({dynamic message, LogEvent? event});
+  /// [context] - Optional. Additional context data.
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context});
 
   /// Abstract method to info a message or event (same as log()).
   ///
   /// [message] - The message or data to log.
   /// [event] - Optional. The specific log event associated with the message.
-  Future<void> info({dynamic message, LogEvent? event});
+  /// [context] - Optional. Additional context data.
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context});
 
   /// Abstract method to log an error.
   ///
   /// [error] - The error object to log.
   /// [stackTrace] - Optional. The stack trace associated with the error.
   /// [event] - Optional. The specific log event associated with the error.
-  Future<void> error({dynamic error, StackTrace? stackTrace, LogEvent? event});
+  /// [context] - Optional. Additional context data.
+  Future<void> error({dynamic error, StackTrace? stackTrace, LogEvent? event, Map<String, dynamic>? context});
 
   /// Abstract method to log a fatal error.
   ///
   /// [error] - The error object to log as fatal.
   /// [stackTrace] - Optional. The stack trace associated with the fatal error.
   /// [event] - Optional. The specific log event associated with the fatal error.
-  Future<void> fatal({dynamic error, StackTrace? stackTrace, LogEvent? event});
+  /// [context] - Optional. Additional context data.
+  Future<void> fatal({dynamic error, StackTrace? stackTrace, LogEvent? event, Map<String, dynamic>? context});
 
   /// Provides a string representation of the strategy including its type and log level.
   @override

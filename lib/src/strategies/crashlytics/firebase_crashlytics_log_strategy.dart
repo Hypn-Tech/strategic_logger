@@ -38,22 +38,34 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   ///
   /// [message] - a general message to log if no event is provided.
   /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
       if (shouldLog(event: event)) {
         developer.log(
           'Logging to Firebase Crashlytics',
           name: 'FirebaseCrashlyticsLogStrategy',
         );
+        
+        // Set context as custom keys if provided
+        if (context != null && context.isNotEmpty) {
+          for (var entry in context.entries) {
+            await FirebaseCrashlytics.instance.setCustomKey(
+              entry.key,
+              entry.value.toString(),
+            );
+          }
+        }
+        
         if (event != null) {
           if (event is FirebaseCrashlyticsLogEvent) {
-            FirebaseCrashlytics.instance.log(
+            await FirebaseCrashlytics.instance.log(
               '${event.eventName}: ${event.eventMessage}',
             );
           }
         } else {
-          FirebaseCrashlytics.instance.log('Message: $message');
+          await FirebaseCrashlytics.instance.log('Message: $message');
         }
       }
     } catch (e, stack) {
@@ -73,10 +85,11 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   ///
   /// [message] - a general message to log if no event is provided.
   /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
-      log(message: message, event: event);
+      await log(message: message, event: event, context: context);
     } catch (e, stack) {
       developer.log(
         'Error during logging in Firebase Crashlytics Strategy',
@@ -95,11 +108,13 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   /// [error] - the error to log.
   /// [stackTrace] - the stack trace associated with the error.
   /// [event] - an optional [LogEvent] providing additional context for the error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> error({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (shouldLog(event: event)) {
@@ -107,14 +122,25 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
           'Reporting error to Firebase Crashlytics',
           name: 'FirebaseCrashlyticsLogStrategy',
         );
+        
+        // Set context as custom keys if provided
+        if (context != null && context.isNotEmpty) {
+          for (var entry in context.entries) {
+            await FirebaseCrashlytics.instance.setCustomKey(
+              entry.key,
+              entry.value.toString(),
+            );
+          }
+        }
+        
         if (event != null && event is FirebaseCrashlyticsLogEvent) {
-          FirebaseCrashlytics.instance.recordError(
+          await FirebaseCrashlytics.instance.recordError(
             error,
             stackTrace,
             reason: event.eventMessage,
           );
         } else {
-          FirebaseCrashlytics.instance.recordError(error, stackTrace);
+          await FirebaseCrashlytics.instance.recordError(error, stackTrace);
         }
       }
     } catch (e, stack) {
@@ -135,11 +161,13 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   /// [error] - the critical error to log.
   /// [stackTrace] - the stack trace associated with the critical error.
   /// [event] - an optional [LogEvent] providing additional context for the critical error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> fatal({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (shouldLog(event: event)) {
@@ -147,15 +175,26 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
           'Recording fatal error to Firebase Crashlytics',
           name: 'FirebaseCrashlyticsLogStrategy',
         );
+        
+        // Set context as custom keys if provided
+        if (context != null && context.isNotEmpty) {
+          for (var entry in context.entries) {
+            await FirebaseCrashlytics.instance.setCustomKey(
+              entry.key,
+              entry.value.toString(),
+            );
+          }
+        }
+        
         if (event != null && event is FirebaseCrashlyticsLogEvent) {
-          FirebaseCrashlytics.instance.recordError(
+          await FirebaseCrashlytics.instance.recordError(
             error,
             stackTrace,
             reason: event.eventMessage,
             fatal: true,
           );
         } else {
-          FirebaseCrashlytics.instance.recordError(
+          await FirebaseCrashlytics.instance.recordError(
             error,
             stackTrace,
             fatal: true,

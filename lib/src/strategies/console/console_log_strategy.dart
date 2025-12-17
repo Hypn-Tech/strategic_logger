@@ -55,25 +55,27 @@ class ConsoleLogStrategy extends LogStrategy {
   ///
   /// [message] - The message or data to log if no specific event is provided.
   /// [event] - An optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     // For the generic log method, we need to determine the level from context
     // Since we can't know the intended level, we'll use info as default
-    await _logMessage(LogLevel.info, message, event: event);
+    await _logMessage(LogLevel.info, message, event: event, context: context);
   }
 
   /// Internal method to log with a specific level
-  Future<void> logWithLevel(LogLevel level, {dynamic message, LogEvent? event}) async {
-    await _logMessage(level, message, event: event);
+  Future<void> logWithLevel(LogLevel level, {dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logMessage(level, message, event: event, context: context);
   }
 
   /// Logs a message or a structured event to the console.
   ///
   /// [message] - The message or data to log if no specific event is provided.
   /// [event] - An optional [LogEvent] providing structured data for logging.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logMessage(LogLevel.info, message, event: event);
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logMessage(LogLevel.info, message, event: event, context: context);
   }
 
   /// Logs an error or a structured event with an error to the console.
@@ -81,17 +83,20 @@ class ConsoleLogStrategy extends LogStrategy {
   /// [error] - The error to log.
   /// [stackTrace] - The stack trace associated with the error.
   /// [event] - An optional [LogEvent] providing additional context for the error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> error({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logMessage(
       LogLevel.error,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -102,17 +107,20 @@ class ConsoleLogStrategy extends LogStrategy {
   /// [error] - The critical error to log.
   /// [stackTrace] - The stack trace associated with the critical error.
   /// [event] - An optional [LogEvent] providing additional context for the critical error.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> fatal({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logMessage(
       LogLevel.fatal,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -122,11 +130,24 @@ class ConsoleLogStrategy extends LogStrategy {
     dynamic message, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (!shouldLog(event: event)) return;
 
       String formattedMessage;
+
+      // Merge context from parameters with event parameters
+      Map<String, dynamic>? combinedContext;
+      if (context != null || event?.parameters != null) {
+        combinedContext = <String, dynamic>{};
+        if (context != null) {
+          combinedContext.addAll(context);
+        }
+        if (event?.parameters != null) {
+          combinedContext.addAll(event!.parameters!);
+        }
+      }
 
       if (_useModernFormatting) {
         // Use isolate for heavy formatting if available
@@ -135,7 +156,7 @@ class ConsoleLogStrategy extends LogStrategy {
             message: message.toString(),
             level: level.name,
             timestamp: DateTime.now(),
-            context: event?.parameters,
+            context: combinedContext,
           );
           formattedMessage = formatted['formatted'] as String;
         } catch (e) {
@@ -146,6 +167,7 @@ class ConsoleLogStrategy extends LogStrategy {
             message: message.toString(),
             timestamp: DateTime.now(),
             event: event,
+            context: combinedContext,
             stackTrace: stackTrace,
             useColors: _useColors,
             useEmojis: false, // Disabled because we have formatted header

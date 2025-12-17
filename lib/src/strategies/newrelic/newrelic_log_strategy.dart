@@ -86,14 +86,14 @@ class NewRelicLogStrategy extends LogStrategy {
 
   /// Logs a message or event to New Relic
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToNewRelic(LogLevel.info, message, event: event);
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToNewRelic(LogLevel.info, message, event: event, context: context);
   }
 
   /// Logs an info message to New Relic
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToNewRelic(LogLevel.info, message, event: event);
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToNewRelic(LogLevel.info, message, event: event, context: context);
   }
 
   /// Logs an error to New Relic
@@ -102,12 +102,14 @@ class NewRelicLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToNewRelic(
       LogLevel.error,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -117,12 +119,14 @@ class NewRelicLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToNewRelic(
       LogLevel.fatal,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -132,6 +136,7 @@ class NewRelicLogStrategy extends LogStrategy {
     dynamic message, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (!shouldLog(event: event)) return;
@@ -141,6 +146,7 @@ class NewRelicLogStrategy extends LogStrategy {
         message,
         event: event,
         stackTrace: stackTrace,
+        context: context,
       );
       _batch.add(logEntry);
 
@@ -164,6 +170,7 @@ class NewRelicLogStrategy extends LogStrategy {
     dynamic message, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) async {
     final timestamp = DateTime.now().toUtc();
 
@@ -179,6 +186,7 @@ class NewRelicLogStrategy extends LogStrategy {
         'environment': environment,
         'event': event?.toMap(),
         'stackTrace': stackTrace?.toString(),
+        'context': context,
       });
     } catch (e) {
       // Fallback to direct processing
@@ -188,6 +196,7 @@ class NewRelicLogStrategy extends LogStrategy {
         timestamp,
         event: event,
         stackTrace: stackTrace,
+        context: context,
       );
     }
 
@@ -201,6 +210,7 @@ class NewRelicLogStrategy extends LogStrategy {
     DateTime timestamp, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) {
     final logEntry = <String, dynamic>{
       'timestamp': timestamp.millisecondsSinceEpoch,
@@ -227,6 +237,16 @@ class NewRelicLogStrategy extends LogStrategy {
     // Add stack trace for errors
     if (stackTrace != null) {
       logEntry['stackTrace'] = stackTrace.toString();
+    }
+
+    // Add context information
+    if (context != null && context.isNotEmpty) {
+      // Merge context into attributes
+      if (logEntry['attributes'] == null) {
+        logEntry['attributes'] = context;
+      } else {
+        logEntry['attributes'] = {...logEntry['attributes'], ...context};
+      }
     }
 
     // Add New Relic specific metadata

@@ -37,8 +37,9 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   ///
   /// [message] - The general message to log if no specific event is provided. Treated as the event name in Firebase.
   /// [event] - An optional [LogEvent] providing structured data for logging, allowing for more granified event analysis.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
       if (shouldLog(event: event)) {
         developer.log(
@@ -48,9 +49,19 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
         if (event != null) {
           final FirebaseAnalyticsLogEvent analyticsEvent =
               event as FirebaseAnalyticsLogEvent;
-          _analytics.logEvent(
+          
+          // Merge context with event parameters
+          Map<String, Object>? parameters = analyticsEvent.parameters != null
+              ? Map<String, Object>.from(analyticsEvent.parameters!)
+              : <String, Object>{};
+          
+          if (context != null && context.isNotEmpty) {
+            parameters.addAll(context);
+          }
+          
+          await _analytics.logEvent(
             name: analyticsEvent.eventName,
-            parameters: analyticsEvent.parameters,
+            parameters: parameters.isNotEmpty ? parameters : null,
           );
         }
       }
@@ -68,10 +79,11 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   ///
   /// [message] - The general message to log if no specific event is provided. Treated as the event name in Firebase.
   /// [event] - An optional [LogEvent] providing structured data for logging, allowing for more granified event analysis.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
-      log(message: message, event: event);
+      await log(message: message, event: event, context: context);
     } catch (e, stack) {
       developer.log(
         'Error during Firebase Analytics logging: $e',
@@ -87,11 +99,13 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   /// [error] - The error to log, used for detailed error tracking.
   /// [stackTrace] - The stack trace associated with the error, providing deeper insight for debugging purposes.
   /// [event] - An optional [LogEvent] providing additional context for the error, enhancing error analysis.
+  /// [context] - Optional. Additional context data.
   @override
   Future<void> error({
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (shouldLog(event: event)) {
@@ -102,16 +116,29 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
         if (event != null) {
           final FirebaseAnalyticsLogEvent analyticsEvent =
               event as FirebaseAnalyticsLogEvent;
-          _analytics.logEvent(
+          
+          Map<String, Object> parameters = {
+            'param_message': error.toString(),
+            'param_error': stackTrace?.toString() ?? 'no_exception_provided',
+            'param_event_type': analyticsEvent.eventName,
+          };
+          
+          // Add context to parameters
+          if (context != null && context.isNotEmpty) {
+            parameters.addAll(context);
+          }
+          
+          await _analytics.logEvent(
             name: 'event_name_error',
-            parameters: {
-              'param_message': error.toString(),
-              'param_error': stackTrace?.toString() ?? 'no_exception_provided',
-              'param_event_type': analyticsEvent.eventName,
-            },
+            parameters: parameters,
           );
         } else {
-          _analytics.logEvent(name: '$error');
+          // Even without event, add context if available
+          Map<String, Object>? parameters;
+          if (context != null && context.isNotEmpty) {
+            parameters = Map<String, Object>.from(context);
+          }
+          await _analytics.logEvent(name: '$error', parameters: parameters);
         }
       }
     } catch (e, stack) {
@@ -129,8 +156,9 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   /// [error] - The critical error to log as fatal.
   /// [stackTrace] - The stack trace associated with the critical error, providing detailed context for system failures.
   /// [event] - An optional [LogEvent] providing additional context for the critical error, aiding in root cause analysis.
+  /// [context] - Optional. Additional context data.
   @override
-  Future<void> fatal({error, StackTrace? stackTrace, LogEvent? event}) async {
+  Future<void> fatal({error, StackTrace? stackTrace, LogEvent? event, Map<String, dynamic>? context}) async {
     try {
       if (shouldLog(event: event)) {
         developer.log(
@@ -140,16 +168,29 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
         if (event != null) {
           final FirebaseAnalyticsLogEvent analyticsEvent =
               event as FirebaseAnalyticsLogEvent;
-          _analytics.logEvent(
+          
+          Map<String, Object> parameters = {
+            'param_message': error.toString(),
+            'param_error': stackTrace?.toString() ?? 'no_exception_provided',
+            'param_event_type': analyticsEvent.eventName,
+          };
+          
+          // Add context to parameters
+          if (context != null && context.isNotEmpty) {
+            parameters.addAll(context);
+          }
+          
+          await _analytics.logEvent(
             name: 'fatal_error',
-            parameters: {
-              'param_message': error.toString(),
-              'param_error': stackTrace?.toString() ?? 'no_exception_provided',
-              'param_event_type': analyticsEvent.eventName,
-            },
+            parameters: parameters,
           );
         } else {
-          _analytics.logEvent(name: 'FATAL: $error');
+          // Even without event, add context if available
+          Map<String, Object>? parameters;
+          if (context != null && context.isNotEmpty) {
+            parameters = Map<String, Object>.from(context);
+          }
+          await _analytics.logEvent(name: 'FATAL: $error', parameters: parameters);
         }
       }
     } catch (e, stack) {

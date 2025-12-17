@@ -216,16 +216,16 @@ class StrategicLogger {
     try {
       switch (entry.level) {
         case LogLevel.debug:
-          await strategy.log(message: entry.message, event: entry.event);
+          await strategy.log(message: entry.message, event: entry.event, context: entry.context);
           break;
         case LogLevel.info:
-          await strategy.info(message: entry.message, event: entry.event);
+          await strategy.info(message: entry.message, event: entry.event, context: entry.context);
           break;
         case LogLevel.warning:
           if (strategy is ConsoleLogStrategy) {
-            await strategy.logWithLevel(LogLevel.warning, message: entry.message, event: entry.event);
+            await strategy.logWithLevel(LogLevel.warning, message: entry.message, event: entry.event, context: entry.context);
           } else {
-            await strategy.log(message: entry.message, event: entry.event);
+            await strategy.log(message: entry.message, event: entry.event, context: entry.context);
           }
           break;
         case LogLevel.error:
@@ -233,6 +233,7 @@ class StrategicLogger {
             error: entry.message,
             stackTrace: entry.stackTrace,
             event: entry.event,
+            context: entry.context,
           );
           break;
         case LogLevel.fatal:
@@ -240,6 +241,7 @@ class StrategicLogger {
             error: entry.message,
             stackTrace: entry.stackTrace,
             event: entry.event,
+            context: entry.context,
           );
           break;
         case LogLevel.none:

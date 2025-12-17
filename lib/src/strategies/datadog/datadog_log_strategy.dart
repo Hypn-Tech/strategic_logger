@@ -93,14 +93,14 @@ class DatadogLogStrategy extends LogStrategy {
 
   /// Logs a message or event to Datadog
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToDatadog(LogLevel.info, message, event: event);
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToDatadog(LogLevel.info, message, event: event, context: context);
   }
 
   /// Logs an info message to Datadog
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToDatadog(LogLevel.info, message, event: event);
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToDatadog(LogLevel.info, message, event: event, context: context);
   }
 
   /// Logs an error to Datadog
@@ -109,12 +109,14 @@ class DatadogLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToDatadog(
       LogLevel.error,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -124,12 +126,14 @@ class DatadogLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToDatadog(
       LogLevel.fatal,
       error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -139,6 +143,7 @@ class DatadogLogStrategy extends LogStrategy {
     dynamic message, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) async {
     try {
       if (!shouldLog(event: event)) return;
@@ -148,6 +153,7 @@ class DatadogLogStrategy extends LogStrategy {
         message,
         event: event,
         stackTrace: stackTrace,
+        context: context,
       );
       _batch.add(logEntry);
 
@@ -171,6 +177,7 @@ class DatadogLogStrategy extends LogStrategy {
     dynamic message, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) async {
     final timestamp = DateTime.now().toUtc();
 
@@ -188,6 +195,7 @@ class DatadogLogStrategy extends LogStrategy {
         'tags': tags,
         'event': event?.toMap(),
         'stackTrace': stackTrace?.toString(),
+        'context': context,
       });
     } catch (e) {
       // Fallback to direct processing
@@ -197,6 +205,7 @@ class DatadogLogStrategy extends LogStrategy {
         timestamp,
         event: event,
         stackTrace: stackTrace,
+        context: context,
       );
     }
 
@@ -210,6 +219,7 @@ class DatadogLogStrategy extends LogStrategy {
     DateTime timestamp, {
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
   }) {
     final logEntry = <String, dynamic>{
       'timestamp': timestamp.toIso8601String(),
@@ -239,6 +249,11 @@ class DatadogLogStrategy extends LogStrategy {
     // Add stack trace for errors
     if (stackTrace != null) {
       logEntry['stack_trace'] = stackTrace.toString();
+    }
+
+    // Add context information
+    if (context != null && context.isNotEmpty) {
+      logEntry['context'] = context;
     }
 
     // Add additional metadata

@@ -54,13 +54,13 @@ class MCPLogStrategy extends LogStrategy {
   }
 
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToMCP(level: LogLevel.info, message: message, event: event);
+  Future<void> log({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToMCP(level: LogLevel.info, message: message, event: event, context: context);
   }
 
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToMCP(level: LogLevel.info, message: message, event: event);
+  Future<void> info({dynamic message, LogEvent? event, Map<String, dynamic>? context}) async {
+    await _logToMCP(level: LogLevel.info, message: message, event: event, context: context);
   }
 
   @override
@@ -68,12 +68,14 @@ class MCPLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToMCP(
       level: LogLevel.error,
       message: error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -82,12 +84,14 @@ class MCPLogStrategy extends LogStrategy {
     dynamic error,
     StackTrace? stackTrace,
     LogEvent? event,
+    Map<String, dynamic>? context,
   }) async {
     await _logToMCP(
       level: LogLevel.fatal,
       message: error,
       event: event,
       stackTrace: stackTrace,
+      context: context,
     );
   }
 
@@ -97,6 +101,7 @@ class MCPLogStrategy extends LogStrategy {
     dynamic message,
     LogEvent? event,
     StackTrace? stackTrace,
+    Map<String, dynamic>? context,
     Map<String, dynamic>? additionalContext,
   }) async {
     try {
@@ -105,13 +110,20 @@ class MCPLogStrategy extends LogStrategy {
         await startServer();
       }
 
+      // Merge context from parameter with additionalContext
+      Map<String, dynamic>? mergedContext = _buildContext(additionalContext, stackTrace);
+      if (context != null && context.isNotEmpty) {
+        mergedContext ??= {};
+        mergedContext.addAll(context);
+      }
+
       // Create structured log entry
       final mcpLogEntry = MCPLogEntry(
         id: _generateLogId(),
         timestamp: DateTime.now(),
         level: level,
         message: _formatMessage(message),
-        context: _buildContext(additionalContext, stackTrace),
+        context: mergedContext,
         event: event,
         source: 'strategic_logger_mcp',
       );
