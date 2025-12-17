@@ -3,10 +3,9 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
-import '../../core/isolate_manager.dart';
+import '../../core/log_queue.dart';
 import '../../core/performance_monitor.dart';
 import '../../enums/log_level.dart';
-import '../../events/log_event.dart';
 import '../log_strategy.dart';
 
 /// A [LogStrategy] implementation that sends logs to New Relic.
@@ -86,62 +85,34 @@ class NewRelicLogStrategy extends LogStrategy {
 
   /// Logs a message or event to New Relic
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToNewRelic(LogLevel.info, message, event: event);
+  Future<void> log(LogEntry entry) async {
+    await _logToNewRelic(entry);
   }
 
   /// Logs an info message to New Relic
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToNewRelic(LogLevel.info, message, event: event);
+  Future<void> info(LogEntry entry) async {
+    await _logToNewRelic(entry);
   }
 
   /// Logs an error to New Relic
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToNewRelic(
-      LogLevel.error,
-      error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> error(LogEntry entry) async {
+    await _logToNewRelic(entry);
   }
 
   /// Logs a fatal error to New Relic
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToNewRelic(
-      LogLevel.fatal,
-      error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> fatal(LogEntry entry) async {
+    await _logToNewRelic(entry);
   }
 
   /// Internal method to log to New Relic
-  Future<void> _logToNewRelic(
-    LogLevel level,
-    dynamic message, {
-    LogEvent? event,
-    StackTrace? stackTrace,
-  }) async {
+  Future<void> _logToNewRelic(LogEntry entry) async {
     try {
-      if (!shouldLog(event: event)) return;
+      if (!shouldLog(event: entry.event)) return;
 
-      final logEntry = await _createLogEntry(
-        level,
-        message,
-        event: event,
-        stackTrace: stackTrace,
-      );
+      final logEntry = _createLogEntry(entry);
       _batch.add(logEntry);
 
       // Send batch if it reaches the batch size
@@ -159,99 +130,54 @@ class NewRelicLogStrategy extends LogStrategy {
   }
 
   /// Creates a log entry for New Relic
-  Future<Map<String, dynamic>> _createLogEntry(
-    LogLevel level,
-    dynamic message, {
-    LogEvent? event,
-    StackTrace? stackTrace,
-  }) async {
-    final timestamp = DateTime.now().toUtc();
+  Map<String, dynamic> _createLogEntry(LogEntry entry) {
+    final timestamp = entry.timestamp.toUtc();
 
-    // Use isolate for heavy processing if available
-    Map<String, dynamic> logEntry;
-    try {
-      logEntry = await isolateManager.executeInIsolate('formatNewRelicLog', {
-        'message': message.toString(),
-        'level': level.name,
-        'timestamp': timestamp.toIso8601String(),
-        'appName': appName,
-        'host': host,
-        'environment': environment,
-        'event': event?.toMap(),
-        'stackTrace': stackTrace?.toString(),
-      });
-    } catch (e) {
-      // Fallback to direct processing
-      logEntry = _formatLogEntryDirect(
-        level,
-        message,
-        timestamp,
-        event: event,
-        stackTrace: stackTrace,
-      );
-    }
-
-    return logEntry;
-  }
-
-  /// Direct log entry formatting (fallback)
-  Map<String, dynamic> _formatLogEntryDirect(
-    LogLevel level,
-    dynamic message,
-    DateTime timestamp, {
-    LogEvent? event,
-    StackTrace? stackTrace,
-  }) {
-    final logEntry = <String, dynamic>{
+    // Merge context from entry.context and event.parameters
+    final attributes = <String, dynamic>{
+      'message': entry.message.toString(),
+      'level': entry.level.name,
       'timestamp': timestamp.millisecondsSinceEpoch,
-      'level': _mapLogLevelToNewRelic(level),
-      'message': message.toString(),
       'appName': appName,
     };
 
-    if (host != null) logEntry['host'] = host;
-    if (environment != null) logEntry['environment'] = environment;
+    if (host != null) attributes['host'] = host;
+    if (environment != null) attributes['environment'] = environment;
+
+    // Add context fields
+    if (entry.context != null && entry.context!.isNotEmpty) {
+      entry.context!.forEach((key, value) {
+        attributes[key] = value;
+      });
+    }
+
+    // Add event parameters if present
+    if (entry.event?.parameters != null &&
+        entry.event!.parameters!.isNotEmpty) {
+      entry.event!.parameters!.forEach((key, value) {
+        attributes[key] = value;
+      });
+    }
 
     // Add event information
-    if (event != null) {
-      logEntry['event'] = event.toMap();
-      logEntry['eventName'] = event.eventName;
-      if (event.eventMessage != null) {
-        logEntry['eventMessage'] = event.eventMessage;
-      }
-      if (event.parameters != null && event.parameters!.isNotEmpty) {
-        logEntry['attributes'] = event.parameters;
+    if (entry.event != null) {
+      attributes['event_name'] = entry.event!.eventName;
+      if (entry.event!.eventMessage != null) {
+        attributes['event_message'] = entry.event!.eventMessage;
       }
     }
 
     // Add stack trace for errors
-    if (stackTrace != null) {
-      logEntry['stackTrace'] = stackTrace.toString();
+    if (entry.stackTrace != null) {
+      attributes['stack_trace'] = entry.stackTrace.toString();
     }
 
-    // Add New Relic specific metadata
-    logEntry['entity'] = {'name': appName, 'type': 'APPLICATION'};
-
-    return logEntry;
+    return attributes;
   }
 
-  /// Maps LogLevel to New Relic level
-  String _mapLogLevelToNewRelic(LogLevel level) {
-    switch (level) {
-      case LogLevel.debug:
-        return 'DEBUG';
-      case LogLevel.info:
-        return 'INFO';
-      case LogLevel.warning:
-        return 'WARN';
-      case LogLevel.error:
-        return 'ERROR';
-      case LogLevel.fatal:
-        return 'FATAL';
-      case LogLevel.none:
-        return 'INFO';
-    }
-  }
+  // Deprecated method removed - using _createLogEntry instead
+  // This method is no longer used and has been replaced by _createLogEntry
+  // _mapLogLevelToNewRelic was also removed as it's no longer needed
 
   /// Sends the current batch to New Relic
   Future<void> _sendBatch() async {

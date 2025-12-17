@@ -107,8 +107,12 @@ class LogQueue {
   }
 }
 
-/// Represents a log entry in the queue
-@internal
+/// Represents a log entry with complete context information.
+///
+/// This class encapsulates all information needed for logging, including
+/// the message, log level, timestamp, optional event, context map, and stack trace.
+/// Strategies receive this complete entry to make decisions about formatting
+/// and routing.
 class LogEntry {
   final dynamic message;
   final LogLevel level;

@@ -1,8 +1,8 @@
 ///
 /// Strategic Logger Extensions - Additional functionality for Strategic Logger
-/// 
+///
 /// This library provides extension methods and additional utilities for the Strategic Logger package.
-library logger_extension;
+// Library name removed - not necessary
 
 /// This library exposes the core functionalities and base classes required for developers
 /// to create and integrate new log strategies. It is ideal for developers looking to implement

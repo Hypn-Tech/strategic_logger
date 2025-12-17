@@ -3,11 +3,24 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import '../core/log_queue.dart';
 import '../events/log_event.dart';
 import '../enums/log_level.dart';
 import '../strategies/log_strategy.dart';
 
 /// AI Log Strategy for Strategic Logger
+///
+/// ⚠️ **SECURITY WARNING**: This strategy sends logs to external AI services.
+/// - Logs may contain sensitive data (tokens, passwords, personal information)
+/// - Data is sent to third-party services (OpenAI, etc.)
+/// - May generate API costs
+/// - Ensure compliance with data privacy regulations (GDPR, LGPD, etc.)
+///
+/// **Recommendations:**
+/// - Sanitize sensitive data before enabling
+/// - Use with explicit user consent
+/// - Consider data privacy implications
+/// - Monitor API usage and costs
 ///
 /// This strategy integrates with AI models and services to provide:
 /// - Intelligent log analysis
@@ -15,6 +28,15 @@ import '../strategies/log_strategy.dart';
 /// - Anomaly detection
 /// - Automated insights and recommendations
 /// - Natural language log summaries
+///
+/// Example:
+/// ```dart
+/// // Use with caution - understand data privacy implications
+/// AILogStrategy(
+///   apiKey: 'your-openai-api-key',
+///   enableAnalysis: false, // Disabled by default
+/// )
+/// ```
 class AILogStrategy extends LogStrategy {
   final String _apiKey;
   final String _baseUrl;
@@ -34,9 +56,9 @@ class AILogStrategy extends LogStrategy {
   AILogStrategy({
     required String apiKey,
     String baseUrl = 'https://api.openai.com/v1',
-    bool enableAnalysis = true,
-    bool enableInsights = true,
-    bool enableAnomalyDetection = true,
+    bool enableAnalysis = false, // Disabled by default for security
+    bool enableInsights = false, // Disabled by default for security
+    bool enableAnomalyDetection = false, // Disabled by default for security
     Duration analysisInterval = const Duration(minutes: 5),
     int batchSize = 100,
   }) : _apiKey = apiKey,
@@ -47,6 +69,15 @@ class AILogStrategy extends LogStrategy {
        _enableAnomalyDetection = enableAnomalyDetection,
        _analysisInterval = analysisInterval,
        _batchSize = batchSize {
+    // Security warning if analysis is enabled
+    if (enableAnalysis || enableInsights || enableAnomalyDetection) {
+      developer.log(
+        '⚠️ AI Strategy: Analysis enabled. Logs will be sent to external AI services. '
+        'Ensure sensitive data is sanitized and you understand data privacy implications.',
+        name: 'AILogStrategy',
+      );
+    }
+
     logLevel = LogLevel.info;
     loggerLogLevel = LogLevel.info;
     supportedEvents = [
@@ -78,60 +109,53 @@ class AILogStrategy extends LogStrategy {
   }
 
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToAI(level: LogLevel.info, message: message, event: event);
+  Future<void> log(LogEntry entry) async {
+    await _logToAI(entry);
   }
 
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToAI(level: LogLevel.info, message: message, event: event);
+  Future<void> info(LogEntry entry) async {
+    await _logToAI(entry);
   }
 
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToAI(
-      level: LogLevel.error,
-      message: error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> error(LogEntry entry) async {
+    await _logToAI(entry);
   }
 
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToAI(
-      level: LogLevel.fatal,
-      message: error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> fatal(LogEntry entry) async {
+    await _logToAI(entry);
   }
 
   /// Logs a message to the AI strategy
-  Future<void> _logToAI({
-    required LogLevel level,
-    dynamic message,
-    LogEvent? event,
-    StackTrace? stackTrace,
-    Map<String, dynamic>? additionalContext,
-  }) async {
+  Future<void> _logToAI(LogEntry entry) async {
     try {
+      // Merge context from entry.context and event.parameters
+      final mergedContext = <String, dynamic>{};
+      if (entry.context != null) {
+        mergedContext.addAll(entry.context!);
+      }
+      if (entry.event?.parameters != null) {
+        mergedContext.addAll(entry.event!.parameters!);
+      }
+      if (entry.stackTrace != null) {
+        mergedContext['stackTrace'] = entry.stackTrace.toString();
+      }
+
+      // Add AI-specific context
+      mergedContext['ai_timestamp'] = DateTime.now().toIso8601String();
+      mergedContext['ai_source'] = 'strategic_logger';
+      mergedContext['ai_version'] = '1.4.0';
+
       // Create AI log entry
       final aiLogEntry = AILogEntry(
         id: _generateLogId(),
-        timestamp: DateTime.now(),
-        level: level,
-        message: _formatMessage(message),
-        context: _buildContext(additionalContext, stackTrace),
-        event: event,
+        timestamp: entry.timestamp,
+        level: entry.level,
+        message: _formatMessage(entry.message),
+        context: mergedContext,
+        event: entry.event,
         source: 'strategic_logger_ai',
       );
 
@@ -139,7 +163,7 @@ class AILogStrategy extends LogStrategy {
       _logBuffer.add(aiLogEntry);
 
       // Perform immediate analysis for critical logs
-      if (level == LogLevel.error || level == LogLevel.fatal) {
+      if (entry.level == LogLevel.error || entry.level == LogLevel.fatal) {
         await _analyzeCriticalLog(aiLogEntry);
       }
 

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import '../../console/modern_console_formatter.dart';
 import '../../core/isolate_manager.dart';
+import '../../core/log_queue.dart';
 import '../../enums/log_level.dart';
 import '../../events/log_event.dart';
 import '../log_strategy.dart';
@@ -53,78 +54,51 @@ class ConsoleLogStrategy extends LogStrategy {
 
   /// Logs a message or a structured event to the console.
   ///
-  /// [message] - The message or data to log if no specific event is provided.
-  /// [event] - An optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    // For the generic log method, we need to determine the level from context
-    // Since we can't know the intended level, we'll use info as default
-    await _logMessage(LogLevel.info, message, event: event);
-  }
-
-  /// Internal method to log with a specific level
-  Future<void> logWithLevel(LogLevel level, {dynamic message, LogEvent? event}) async {
-    await _logMessage(level, message, event: event);
+  Future<void> log(LogEntry entry) async {
+    await _logMessage(entry);
   }
 
   /// Logs a message or a structured event to the console.
   ///
-  /// [message] - The message or data to log if no specific event is provided.
-  /// [event] - An optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logMessage(LogLevel.info, message, event: event);
+  Future<void> info(LogEntry entry) async {
+    await _logMessage(entry);
   }
 
   /// Logs an error or a structured event with an error to the console.
   ///
-  /// [error] - The error to log.
-  /// [stackTrace] - The stack trace associated with the error.
-  /// [event] - An optional [LogEvent] providing additional context for the error.
+  /// [entry] - The complete log entry containing error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logMessage(
-      LogLevel.error,
-      error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> error(LogEntry entry) async {
+    await _logMessage(entry);
   }
 
   /// Marks an error as fatal and records it to the console.
   ///
   /// This method treats the error as a critical failure that should be prominently flagged in the console.
   ///
-  /// [error] - The critical error to log.
-  /// [stackTrace] - The stack trace associated with the critical error.
-  /// [event] - An optional [LogEvent] providing additional context for the critical error.
+  /// [entry] - The complete log entry containing fatal error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logMessage(
-      LogLevel.fatal,
-      error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> fatal(LogEntry entry) async {
+    await _logMessage(entry);
   }
 
   /// Internal method to log messages with modern formatting
-  Future<void> _logMessage(
-    LogLevel level,
-    dynamic message, {
-    LogEvent? event,
-    StackTrace? stackTrace,
-  }) async {
+  Future<void> _logMessage(LogEntry entry) async {
     try {
-      if (!shouldLog(event: event)) return;
+      if (!shouldLog(event: entry.event)) return;
+
+      // Merge context from entry.context and event.parameters
+      final mergedContext = <String, dynamic>{};
+      if (entry.context != null) {
+        mergedContext.addAll(entry.context!);
+      }
+      if (entry.event?.parameters != null) {
+        mergedContext.addAll(entry.event!.parameters!);
+      }
 
       String formattedMessage;
 
@@ -132,39 +106,35 @@ class ConsoleLogStrategy extends LogStrategy {
         // Use isolate for heavy formatting if available
         try {
           final formatted = await isolateManager.formatLog(
-            message: message.toString(),
-            level: level.name,
-            timestamp: DateTime.now(),
-            context: event?.parameters,
+            message: entry.message.toString(),
+            level: entry.level.name,
+            timestamp: entry.timestamp,
+            context: mergedContext.isNotEmpty ? mergedContext : null,
           );
           formattedMessage = formatted['formatted'] as String;
         } catch (e) {
           // Fallback to direct formatting
           // Disable emojis since we're using the formatted header
           formattedMessage = modernConsoleFormatter.formatLog(
-            level: level,
-            message: message.toString(),
-            timestamp: DateTime.now(),
-            event: event,
-            stackTrace: stackTrace,
+            level: entry.level,
+            message: entry.message.toString(),
+            timestamp: entry.timestamp,
+            event: entry.event,
+            stackTrace: entry.stackTrace,
             useColors: _useColors,
             useEmojis: false, // Disabled because we have formatted header
             showTimestamp: _showTimestamp,
             showContext: _showContext,
+            context: mergedContext.isNotEmpty ? mergedContext : null,
           );
         }
       } else {
         // Legacy formatting
-        formattedMessage = _formatLegacyMessage(
-          level,
-          message,
-          event,
-          stackTrace,
-        );
+        formattedMessage = _formatLegacyMessage(entry, mergedContext);
       }
 
       // Add HYPN-TECH header to all logs with visual formatting
-      final finalMessage = _formatLogHeader(level, formattedMessage);
+      final finalMessage = _formatLogHeader(entry.level, formattedMessage);
 
       // Output to console (terminal)
       print(finalMessage);
@@ -173,10 +143,10 @@ class ConsoleLogStrategy extends LogStrategy {
       developer.log(
         finalMessage,
         name: 'ConsoleLogStrategy',
-        error: level == LogLevel.error || level == LogLevel.fatal
-            ? message
+        error: entry.level == LogLevel.error || entry.level == LogLevel.fatal
+            ? entry.message
             : null,
-        stackTrace: stackTrace,
+        stackTrace: entry.stackTrace,
       );
     } catch (e, stack) {
       developer.log(
@@ -198,19 +168,20 @@ class ConsoleLogStrategy extends LogStrategy {
     // ANSI color codes
     const String reset = '\x1B[0m';
     const String bold = '\x1B[1m';
-    
+
     // HYPN-TECH colors (teal/cyan theme)
     const String hypnTechBg = '\x1B[46m'; // Cyan background
     const String hypnTechText = '\x1B[30m'; // Black text on cyan background
-    
+
     // STRATEGIC-LOGGER colors (blue theme)
     const String strategicLoggerBg = '\x1B[44m'; // Blue background
-    const String strategicLoggerText = '\x1B[37m'; // White text on blue background
-    
+    const String strategicLoggerText =
+        '\x1B[37m'; // White text on blue background
+
     // Level colors
     String levelBg;
     String levelText;
-    
+
     switch (level) {
       case LogLevel.debug:
         levelBg = '\x1B[45m'; // Magenta background
@@ -239,32 +210,37 @@ class ConsoleLogStrategy extends LogStrategy {
     }
 
     // Format the header with visual styling
-    final String hypnTechPart = '$hypnTechBg$hypnTechText$bold HYPN-TECH $reset';
-    final String strategicLoggerPart = '$strategicLoggerBg$strategicLoggerText$bold STRATEGIC-LOGGER $reset';
-    final String levelPart = '$levelBg$levelText$bold ${level.name.toUpperCase()} $reset';
-    
+    final String hypnTechPart =
+        '$hypnTechBg$hypnTechText$bold HYPN-TECH $reset';
+    final String strategicLoggerPart =
+        '$strategicLoggerBg$strategicLoggerText$bold STRATEGIC-LOGGER $reset';
+    final String levelPart =
+        '$levelBg$levelText$bold ${level.name.toUpperCase()} $reset';
+
     return '$hypnTechPart$strategicLoggerPart$levelPart$message';
   }
 
   /// Legacy message formatting for backward compatibility
   String _formatLegacyMessage(
-    LogLevel level,
-    dynamic message,
-    LogEvent? event,
-    StackTrace? stackTrace,
+    LogEntry entry,
+    Map<String, dynamic> mergedContext,
   ) {
     final buffer = StringBuffer();
 
-    if (event != null) {
+    if (entry.event != null) {
       buffer.write(
-        'eventName: ${event.eventName} eventMessage: ${event.eventMessage ?? "No message"} message: $message',
+        'eventName: ${entry.event!.eventName} eventMessage: ${entry.event!.eventMessage ?? "No message"} message: ${entry.message}',
       );
     } else {
-      buffer.write('$message');
+      buffer.write('${entry.message}');
     }
 
-    if (stackTrace != null) {
-      buffer.write(' Stack Trace: $stackTrace');
+    if (mergedContext.isNotEmpty) {
+      buffer.write(' Context: $mergedContext');
+    }
+
+    if (entry.stackTrace != null) {
+      buffer.write(' Stack Trace: ${entry.stackTrace}');
     }
 
     return buffer.toString();

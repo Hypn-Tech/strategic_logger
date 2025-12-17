@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
+// Platform detection
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+import '../core/log_queue.dart';
 import '../events/log_event.dart';
 import '../enums/log_level.dart';
 import '../strategies/log_strategy.dart';
@@ -9,29 +14,73 @@ import 'mcp_server.dart';
 
 /// MCP Log Strategy for Strategic Logger
 ///
+/// ⚠️ **SECURITY WARNING**: This strategy starts an HTTP server that exposes logs.
+/// **NOT recommended for production mobile/web apps** without proper authentication.
+///
 /// This strategy integrates with the Model Context Protocol (MCP) server
 /// to provide AI agents with structured logging capabilities.
+///
+/// **Security Considerations:**
+/// - HTTP server exposes logs without authentication by default
+/// - Should only be used in development or with proper security measures
+/// - Not recommended for Flutter mobile apps in production
+/// - Consider using only in local development environments
 ///
 /// Features:
 /// - Structured logging for AI consumption
 /// - Real-time log streaming
 /// - Query capabilities for log analysis
 /// - Health monitoring through logs
+///
+/// Example (Development only):
+/// ```dart
+/// // Only use in development!
+/// MCPLogStrategy(
+///   enableInMobile: false, // Disabled by default for security
+///   apiKey: 'your-secret-key', // Required for production
+/// )
+/// ```
 class MCPLogStrategy extends LogStrategy {
   final MCPServer _mcpServer;
   final bool _enableRealTimeStreaming;
   final bool _enableHealthMonitoring;
   final Map<String, dynamic> _defaultContext;
+  final bool _enableInMobile;
+  final String? _apiKey;
 
+  /// Constructs an [MCPLogStrategy].
+  ///
+  /// ⚠️ **SECURITY WARNING**: This strategy starts an HTTP server.
+  /// - [enableInMobile] - Set to true to enable in mobile (default: false for security)
+  /// - [apiKey] - Optional API key for authentication (recommended for production)
+  /// - [mcpServer] - Custom MCP server instance
+  /// - [enableRealTimeStreaming] - Enable real-time log streaming
+  /// - [enableHealthMonitoring] - Enable health monitoring
+  /// - [defaultContext] - Default context to add to all logs
   MCPLogStrategy({
     MCPServer? mcpServer,
+    bool enableInMobile = false,
+    String? apiKey,
     bool enableRealTimeStreaming = true,
     bool enableHealthMonitoring = true,
     Map<String, dynamic>? defaultContext,
   }) : _mcpServer = mcpServer ?? MCPServer.instance,
+       _enableInMobile = enableInMobile,
+       _apiKey = apiKey,
        _enableRealTimeStreaming = enableRealTimeStreaming,
        _enableHealthMonitoring = enableHealthMonitoring,
        _defaultContext = defaultContext ?? {} {
+    // Security check: Warn if trying to use in mobile/web without explicit enable
+    if (!_enableInMobile && (kIsWeb || Platform.isAndroid || Platform.isIOS)) {
+      developer.log(
+        '⚠️ MCP Server is disabled by default in mobile/web for security. '
+        'Set enableInMobile: true only if you understand the risks. '
+        'MCP Server exposes logs via HTTP without authentication by default.',
+        name: 'MCPLogStrategy',
+      );
+      // Don't throw error, just log warning - strategy will work but server won't start
+    }
+
     logLevel = LogLevel.info;
     loggerLogLevel = LogLevel.info;
     supportedEvents = [
@@ -40,9 +89,21 @@ class MCPLogStrategy extends LogStrategy {
   }
 
   /// Starts the MCP server if not already running
+  ///
+  /// ⚠️ **Security**: Server will only start if enabled for mobile/web platforms.
   Future<void> startServer() async {
+    // Security check: Don't start server in mobile/web unless explicitly enabled
+    if (!_enableInMobile && (kIsWeb || Platform.isAndroid || Platform.isIOS)) {
+      developer.log(
+        '⚠️ MCP Server start blocked: Not enabled for mobile/web. '
+        'Set enableInMobile: true to allow (security risk!).',
+        name: 'MCPLogStrategy',
+      );
+      return;
+    }
+
     if (!_mcpServer.isRunning) {
-      await _mcpServer.start();
+      await _mcpServer.start(apiKey: _apiKey);
     }
   }
 
@@ -54,65 +115,53 @@ class MCPLogStrategy extends LogStrategy {
   }
 
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    await _logToMCP(level: LogLevel.info, message: message, event: event);
+  Future<void> log(LogEntry entry) async {
+    await _logToMCP(entry);
   }
 
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await _logToMCP(level: LogLevel.info, message: message, event: event);
+  Future<void> info(LogEntry entry) async {
+    await _logToMCP(entry);
   }
 
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToMCP(
-      level: LogLevel.error,
-      message: error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> error(LogEntry entry) async {
+    await _logToMCP(entry);
   }
 
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
-    await _logToMCP(
-      level: LogLevel.fatal,
-      message: error,
-      event: event,
-      stackTrace: stackTrace,
-    );
+  Future<void> fatal(LogEntry entry) async {
+    await _logToMCP(entry);
   }
 
   /// Logs a message to the MCP server
-  Future<void> _logToMCP({
-    required LogLevel level,
-    dynamic message,
-    LogEvent? event,
-    StackTrace? stackTrace,
-    Map<String, dynamic>? additionalContext,
-  }) async {
+  Future<void> _logToMCP(LogEntry entry) async {
     try {
       // Ensure server is running
       if (!_mcpServer.isRunning) {
         await startServer();
       }
 
+      // Merge context from entry.context and event.parameters
+      final mergedContext = <String, dynamic>{};
+      if (entry.context != null) {
+        mergedContext.addAll(entry.context!);
+      }
+      if (entry.event?.parameters != null) {
+        mergedContext.addAll(entry.event!.parameters!);
+      }
+      if (entry.stackTrace != null) {
+        mergedContext['stackTrace'] = entry.stackTrace.toString();
+      }
+
       // Create structured log entry
       final mcpLogEntry = MCPLogEntry(
         id: _generateLogId(),
-        timestamp: DateTime.now(),
-        level: level,
-        message: _formatMessage(message),
-        context: _buildContext(additionalContext, stackTrace),
-        event: event,
+        timestamp: entry.timestamp,
+        level: entry.level,
+        message: _formatMessage(entry.message),
+        context: mergedContext.isNotEmpty ? mergedContext : <String, dynamic>{},
+        event: entry.event,
         source: 'strategic_logger_mcp',
       );
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import '../core/log_queue.dart';
@@ -32,9 +33,12 @@ class MCPServer {
   final StreamController<MCPLogEntry> _logStreamController =
       StreamController<MCPLogEntry>.broadcast();
 
-  MCPServer({int port = 3001, String host = 'localhost'})
+  String? _apiKey;
+
+  MCPServer({int port = 3001, String host = 'localhost', String? apiKey})
     : _port = port,
-      _host = host;
+      _host = host,
+      _apiKey = apiKey;
 
   /// Whether the MCP server is currently running
   bool get isRunning => _isRunning;
@@ -46,16 +50,38 @@ class MCPServer {
   List<MCPLogEntry> get logHistory => _logHistory;
 
   /// Starts the MCP server
-  Future<void> start() async {
+  ///
+  /// ⚠️ **Security Warning**: Server exposes logs via HTTP.
+  /// Consider providing [apiKey] for authentication.
+  Future<void> start({String? apiKey}) async {
     if (_isRunning) {
       throw StateError('MCP Server is already running');
+    }
+
+    // Update API key if provided
+    if (apiKey != null) {
+      _apiKey = apiKey;
     }
 
     try {
       _server = await HttpServer.bind(_host, _port);
       _isRunning = true;
 
-      print('🚀 MCP Server started on $_host:$_port');
+      if (_apiKey != null) {
+        developer.log(
+          '🚀 MCP Server started on $_host:$_port (with authentication)',
+          name: 'MCPServer',
+        );
+      } else {
+        developer.log(
+          '⚠️ MCP Server started on $_host:$_port (NO AUTHENTICATION - Security Risk!)',
+          name: 'MCPServer',
+        );
+        developer.log(
+          '⚠️ Consider providing apiKey for production use',
+          name: 'MCPServer',
+        );
+      }
 
       // Handle incoming requests
       _server!.listen(_handleRequest);
@@ -63,7 +89,7 @@ class MCPServer {
       // Set up log queue listener
       _setupLogQueueListener();
     } catch (e) {
-      print('❌ Failed to start MCP Server: $e');
+      developer.log('❌ Failed to start MCP Server: $e', name: 'MCPServer');
       rethrow;
     }
   }
@@ -76,7 +102,7 @@ class MCPServer {
     _server = null;
     _isRunning = false;
 
-    print('🛑 MCP Server stopped');
+    developer.log('🛑 MCP Server stopped', name: 'MCPServer');
   }
 
   /// Handles incoming HTTP requests
@@ -84,12 +110,42 @@ class MCPServer {
     try {
       final response = request.response;
       response.headers.add('Content-Type', 'application/json');
-      response.headers.add('Access-Control-Allow-Origin', '*');
+
+      // Security: Check authentication if API key is set
+      if (_apiKey != null && !_isAuthenticated(request)) {
+        response.statusCode = 401;
+        response.headers.add('WWW-Authenticate', 'Bearer');
+        response.write(
+          jsonEncode({'error': 'Unauthorized - API key required'}),
+        );
+        await response.close();
+        return;
+      }
+
+      // CORS: Only allow specific origins if API key is set, otherwise warn
+      if (_apiKey != null) {
+        // In production with auth, restrict CORS
+        final origin = request.headers.value('origin');
+        if (origin != null && _isAllowedOrigin(origin)) {
+          response.headers.add('Access-Control-Allow-Origin', origin);
+        }
+      } else {
+        // No auth: warn but allow (development only)
+        response.headers.add('Access-Control-Allow-Origin', '*');
+        developer.log(
+          '⚠️ MCP Server: CORS open to all origins (no authentication)',
+          name: 'MCPServer',
+        );
+      }
+
       response.headers.add(
         'Access-Control-Allow-Methods',
         'GET, POST, OPTIONS',
       );
-      response.headers.add('Access-Control-Allow-Headers', 'Content-Type');
+      response.headers.add(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization',
+      );
 
       if (request.method == 'OPTIONS') {
         response.statusCode = 200;
@@ -120,11 +176,43 @@ class MCPServer {
 
       await response.close();
     } catch (e) {
-      print('❌ Error handling MCP request: $e');
+      developer.log('❌ Error handling MCP request: $e', name: 'MCPServer');
       request.response.statusCode = 500;
       request.response.write(jsonEncode({'error': e.toString()}));
       await request.response.close();
     }
+  }
+
+  /// Checks if the request is authenticated
+  bool _isAuthenticated(HttpRequest request) {
+    if (_apiKey == null) {
+      // No API key set - allow (development mode)
+      return true;
+    }
+
+    // Check Authorization header
+    final authHeader = request.headers.value('Authorization');
+    if (authHeader == null) {
+      return false;
+    }
+
+    // Support Bearer token format
+    if (authHeader.startsWith('Bearer ')) {
+      final token = authHeader.substring(7);
+      return token == _apiKey;
+    }
+
+    // Support direct API key
+    return authHeader == _apiKey;
+  }
+
+  /// Checks if origin is allowed (for CORS)
+  bool _isAllowedOrigin(String origin) {
+    // In production, you might want to check against a whitelist
+    // For now, allow localhost and same-origin
+    return origin.contains('localhost') ||
+        origin.contains('127.0.0.1') ||
+        origin == _host;
   }
 
   /// Handles requests to get recent logs

@@ -85,7 +85,7 @@ Add Strategic Logger to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  strategic_logger: ^1.3.0
+  strategic_logger: ^1.4.0
 ```
 
 Then run:
@@ -171,74 +171,82 @@ void main() async {
 
 ---
 
-## 🤖 MCP (Model Context Protocol) Integration
+## ⚠️ MCP & AI Strategies - Security Considerations
 
-Strategic Logger is the **first logging framework** to natively support the Model Context Protocol, enabling seamless integration with AI agents and intelligent tools.
+### 🔒 Security Warnings
 
-### MCP Server Features
+**MCP Server:**
+- ⚠️ **NOT recommended for production mobile/web apps** without authentication
+- ⚠️ Exposes logs via HTTP server without authentication by default
+- ⚠️ **Disabled by default in mobile/web** for security
+- ✅ Only use in development or with proper authentication
+- ✅ Consider using only in local development environments
+
+**AI Strategy:**
+- ⚠️ Sends logs to external AI services (OpenAI, etc.)
+- ⚠️ Logs may contain sensitive data
+- ⚠️ May generate API costs
+- ✅ Use with caution and data sanitization
+- ✅ Opt-in explicitly
+
+### MCP Server (Development Only)
 
 ```dart
-// Initialize MCP strategy
+// ⚠️ WARNING: Only use in development with proper understanding of risks
+// MCP Server exposes logs via HTTP without authentication by default
+
+// For development (local only):
 final mcpStrategy = MCPLogStrategy(
-  port: 3000,
-  host: 'localhost',
-  maxHistorySize: 10000,
+  enableInMobile: false, // Disabled by default for security
+  apiKey: 'your-secret-key', // Recommended for any use
 );
 
-// Start the MCP server
+// For production (with authentication):
+final mcpStrategy = MCPLogStrategy(
+  enableInMobile: true, // Explicitly enabled
+  apiKey: 'strong-secret-key', // REQUIRED for production
+);
+
 await mcpStrategy.startServer();
 
-// Log with MCP context
-await mcpStrategy.info(
-  message: 'User authentication successful',
-  context: {
-    'userId': '12345',
-    'sessionId': 'abc-def-ghi',
-    'timestamp': DateTime.now().toIso8601String(),
-  },
+// Log with context
+await logger.log(
+  'User action',
+  context: {'userId': '12345', 'action': 'login'},
 );
-
-// Get health status
-final health = await mcpStrategy.getHealthStatus();
-print('MCP Server Health: $health');
 ```
 
-### AI Agent Integration
+### AI Strategy (Use with Caution)
 
 ```dart
-// Initialize AI strategy for intelligent analysis
+// ⚠️ WARNING: Sends logs to external AI services
+// Ensure you understand data privacy implications
+
 final aiStrategy = AILogStrategy(
-  analysisInterval: Duration(minutes: 5),
-  batchSize: 100,
-  enableInsights: true,
+  apiKey: 'your-openai-api-key',
+  enableAnalysis: false, // Disabled by default
+  // Consider sanitizing sensitive data before enabling
 );
 
-// Start AI analysis
-await aiStrategy.startAnalysis();
+await logger.initialize(strategies: [aiStrategy]);
 
-// Log with AI context
-await aiStrategy.error(
-  message: 'Database connection failed',
-  context: {
-    'database': 'users_db',
-    'retryCount': 3,
-    'lastError': 'Connection timeout',
-  },
+// Logs will be sent to AI service for analysis
+await logger.error(
+  'Error occurred',
+  context: {'errorCode': 500}, // Be careful with sensitive data
 );
-
-// Generate intelligent summary
-final summary = await aiStrategy.generateLogSummary();
-print('AI Analysis: $summary');
 ```
 
-### MCP Endpoints
+### MCP Endpoints (When Enabled)
 
-The MCP server provides several HTTP endpoints for AI agent integration:
+The MCP server provides HTTP endpoints (⚠️ requires authentication in production):
 
 - `GET /health` - Server health and metrics
-- `GET /logs` - Retrieve recent logs with filtering
-- `POST /query` - Advanced log querying
-- `WebSocket /stream` - Real-time log streaming
+- `GET /logs` - Retrieve recent logs with filtering (requires auth)
+- `POST /logs/query` - Advanced log querying (requires auth)
+- `GET /logs/stream` - Real-time log streaming (requires auth)
+
+**Authentication:** Use `Authorization: Bearer <apiKey>` header when API key is set.
 
 ---
 
@@ -272,7 +280,7 @@ await logger.fatal('Fatal error');
 ### 🎯 Structured Logging with Context
 
 ```dart
-// Rich context logging
+// Rich context logging - context is now passed to ALL strategies
 await logger.info('User action', context: {
   'userId': '123',
   'action': 'login',
@@ -281,16 +289,29 @@ await logger.info('User action', context: {
   'version': '1.2.3',
 });
 
-// Error with stack trace
+// Context is available in Datadog for indexing and filtering
+// Context is added as Sentry extra fields
+// Context is merged into Firebase Analytics parameters
+// Context is displayed in console output
+
+// Error with stack trace and context
 try {
   // Some risky operation
   throw Exception('Something went wrong');
 } catch (e, stackTrace) {
-  await logger.error('Operation failed', context: {
-    'operation': 'data_sync',
-    'error': e.toString(),
-  });
+  await logger.error(
+    'Operation failed',
+    stackTrace: stackTrace,
+    context: {
+      'operation': 'data_sync',
+      'retryCount': 3,
+      'lastError': e.toString(),
+    },
+  );
 }
+
+// Datadog will receive context fields directly in the log entry
+// You can filter and search by these fields in Datadog
 ```
 
 ### 🔥 Multi-Strategy Logging
@@ -302,9 +323,22 @@ await logger.initialize(
     ConsoleLogStrategy(useModernFormatting: true),
     SentryLogStrategy(dsn: 'your-sentry-dsn'),
     FirebaseCrashlyticsLogStrategy(),
-    DatadogLogStrategy(apiKey: 'your-api-key'),
-    MCPLogStrategy(), // AI agent integration
-    AILogStrategy(apiKey: 'your-openai-key'),
+    DatadogLogStrategy(
+      apiKey: 'your-datadog-api-key',
+      service: 'my-app',
+      env: 'production',
+      enableCompression: true, // Gzip compression enabled by default
+    ),
+    // ⚠️ MCP Strategy - NOT recommended for production mobile/web
+    // MCPLogStrategy(
+    //   enableInMobile: false, // Disabled by default for security
+    //   apiKey: 'your-secret-key', // Required for production
+    // ),
+    // ⚠️ AI Strategy - Use with caution (sends data to external services)
+    // AILogStrategy(
+    //   apiKey: 'your-openai-api-key',
+    //   enableAnalysis: false, // Disabled by default
+    // ),
   ],
 );
 
@@ -540,12 +574,14 @@ await logger.initialize(
     // Firebase Crashlytics
     FirebaseCrashlyticsLogStrategy(),
     
-    // Datadog
+    // Datadog (v2 API with compression)
     DatadogLogStrategy(
       apiKey: 'your-datadog-api-key',
       service: 'my-app',
       env: 'production',
       tags: 'team:mobile,version:1.0.0',
+      enableCompression: true, // Default: true, reduces network overhead
+      // Uses v2 endpoint: https://http-intake.logs.datadoghq.com/api/v2/logs
     ),
     
     // New Relic
@@ -554,6 +590,19 @@ await logger.initialize(
       appName: 'my-app',
       environment: 'production',
     ),
+    
+    // ⚠️ MCP Strategy - NOT recommended for production mobile/web
+    // Only use in development with proper authentication
+    // MCPLogStrategy(
+    //   enableInMobile: false, // Disabled by default for security
+    //   apiKey: 'your-secret-key', // Required for production
+    // ),
+    
+    // ⚠️ AI Strategy - Use with caution (sends data to external services)
+    // AILogStrategy(
+    //   apiKey: 'your-openai-api-key',
+    //   enableAnalysis: false, // Disabled by default
+    // ),
   ],
   
   // Modern features
@@ -565,38 +614,95 @@ await logger.initialize(
 
 ### Custom Strategies
 
-Create your own logging strategy:
+You can create custom strategies in two ways:
+
+#### Option 1: New Way (Recommended for new code)
 
 ```dart
+import 'package:strategic_logger/src/core/log_queue.dart';
+
 class MyCustomLogStrategy extends LogStrategy {
-    @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
-    // Use isolates for heavy processing
-    final result = await isolateManager.executeInIsolate(
-      'customTask',
-      {'message': message, 'event': event?.toMap()},
-    );
+  @override
+  Future<void> log(LogEntry entry) async {
+    // Access all log information from the entry
+    final message = entry.message;
+    final level = entry.level;
+    final timestamp = entry.timestamp;
+    final context = entry.context; // Context is available!
+    final event = entry.event;
     
-    // Send to your custom service
-    await _sendToCustomService(result);
+    // Your implementation
+    await _sendToCustomService({
+      'message': message.toString(),
+      'level': level.name,
+      'timestamp': timestamp.toIso8601String(),
+      'context': context,
+      'event': event?.toMap(),
+    });
   }
   
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    await log(message: message, event: event);
+  Future<void> info(LogEntry entry) async {
+    await log(entry);
   }
   
   @override
-  Future<void> error({dynamic error, StackTrace? stackTrace, LogEvent? event}) async {
-    await log(message: error, event: event);
+  Future<void> error(LogEntry entry) async {
+    // Access error information including stackTrace and context
+    final error = entry.message;
+    final stackTrace = entry.stackTrace;
+    final context = entry.context; // Context is available!
+    
+    await log(entry);
   }
   
   @override
-  Future<void> fatal({dynamic error, StackTrace? stackTrace, LogEvent? event}) async {
-    await log(message: error, event: event);
-    }
+  Future<void> fatal(LogEntry entry) async {
+    await error(entry);
+  }
 }
 ```
+
+#### Option 2: Legacy Way (Still works! No changes needed!)
+
+```dart
+class MyLegacyStrategy extends LogStrategy {
+  @override
+  Future<void> logMessage(
+    dynamic message,
+    LogEvent? event,
+    Map<String, dynamic>? context,  // Context is now available automatically! 🎉
+  ) async {
+    // Your old implementation - still works!
+    print('Message: $message');
+    if (context != null) {
+      print('Context: $context');  // Context works without any changes!
+    }
+  }
+  
+  @override
+  Future<void> logError(
+    dynamic error,
+    StackTrace? stackTrace,
+    LogEvent? event,
+    Map<String, dynamic>? context,  // Context is now available automatically! 🎉
+  ) async {
+    // Your old implementation - still works!
+    print('Error: $error');
+    if (context != null) {
+      print('Context: $context');  // Context works without any changes!
+    }
+  }
+}
+```
+
+**Note**: The `LogEntry` object contains:
+- `message` - The log message
+- `level` - The log level (debug, info, warning, error, fatal)
+- `timestamp` - When the log was created
+- `context` - Structured context map (Map<String, dynamic>?)
+- `stackTrace` - Stack trace for errors (StackTrace?)
+- `event` - Optional LogEvent object
 
 ---
 
@@ -620,6 +726,16 @@ print('Error rate: ${stats['processLogEntry']?.errorRate}%');
 ```
 
 ---
+
+## ✅ Backward Compatible - No Breaking Changes!
+
+**✅ Zero Breaking Changes**: Old custom strategies continue to work without modification!
+**✅ Context Now Available**: Even legacy strategies automatically receive context.
+**✅ All built-in strategies updated**: Using new interface for better context support.
+**✅ Public API unchanged**: `logger.log()`, `logger.info()`, etc. work the same way.
+
+**Legacy strategies** can continue using `logMessage()` and `logError()` - they now receive context automatically!
+**New strategies** should use `log(LogEntry)`, `info(LogEntry)`, etc. for better type safety.
 
 ## 🆕 Migration Guide
 

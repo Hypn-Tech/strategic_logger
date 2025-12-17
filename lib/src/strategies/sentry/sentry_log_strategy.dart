@@ -1,7 +1,8 @@
 import 'dart:developer' as developer;
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:strategic_logger/logger_extension.dart';
-import 'package:strategic_logger/src/strategies/sentry/sentry_log_event.dart';
+import '../../core/log_queue.dart';
+import '../../strategies/sentry/sentry_log_event.dart';
 
 /// A [LogStrategy] implementation that logs messages and errors to Sentry.
 ///
@@ -29,20 +30,36 @@ class SentryLogStrategy extends LogStrategy {
 
   /// Logs a message or a structured event to Sentry.
   ///
-  /// If an event is provided, the log will include structured data tailored for Sentry.
-  /// Otherwise, it logs a general message.
-  ///
-  /// [message] - a general message to log if no event is provided.
-  /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log('Logging to Sentry', name: 'SentryLogStrategy');
-        if (event != null && event is SentryLogEvent) {
-          Sentry.captureMessage('${event.eventName}: ${event.eventMessage}');
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final context = <String, dynamic>{};
+        if (entry.context != null) {
+          context.addAll(entry.context!);
+        }
+        if (entry.event?.parameters != null) {
+          context.addAll(entry.event!.parameters!);
+        }
+
+        // Add context to Sentry
+        if (context.isNotEmpty) {
+          Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setExtra(key, value);
+            });
+          });
+        }
+
+        if (entry.event != null && entry.event is SentryLogEvent) {
+          final sentryEvent = entry.event as SentryLogEvent;
+          Sentry.captureMessage(
+            '${sentryEvent.eventName}: ${sentryEvent.eventMessage}',
+          );
         } else {
-          Sentry.captureMessage('Message: $message');
+          Sentry.captureMessage('Message: ${entry.message}');
         }
       }
     } catch (e, stack) {
@@ -57,45 +74,38 @@ class SentryLogStrategy extends LogStrategy {
 
   /// Logs a message or a structured event to Sentry.
   ///
-  /// If an event is provided, the log will include structured data tailored for Sentry.
-  /// Otherwise, it logs a general message.
-  ///
-  /// [message] - a general message to log if no event is provided.
-  /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    try {
-      log(message: message, event: event);
-    } catch (e, stack) {
-      developer.log(
-        'Error during logging in Sentry Strategy',
-        name: 'SentryLogStrategy',
-        error: e,
-        stackTrace: stack,
-      );
-    }
+  Future<void> info(LogEntry entry) async {
+    await log(entry);
   }
 
   /// Records an error or a structured event with an error to Sentry.
   ///
-  /// Errors are logged with their associated stack traces. If an event is provided,
-  /// additional context is included in the report.
-  ///
-  /// [error] - the error to log.
-  /// [stackTrace] - the stack trace associated with the error.
-  /// [event] - an optional [LogEvent] providing additional context for the error.
+  /// [entry] - The complete log entry containing error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
+  Future<void> error(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log('Reporting error to Sentry', name: 'SentryLogStrategy');
-        if (event != null) {
-          Sentry.captureException(error, stackTrace: stackTrace);
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final context = <String, dynamic>{};
+        if (entry.context != null) {
+          context.addAll(entry.context!);
         }
+        if (entry.event?.parameters != null) {
+          context.addAll(entry.event!.parameters!);
+        }
+
+        // Add context to Sentry
+        if (context.isNotEmpty) {
+          Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setExtra(key, value);
+            });
+          });
+        }
+
+        Sentry.captureException(entry.message, stackTrace: entry.stackTrace);
       }
     } catch (e, stack) {
       developer.log(
@@ -109,27 +119,30 @@ class SentryLogStrategy extends LogStrategy {
 
   /// Marks an error as fatal and records it to Sentry.
   ///
-  /// Fatal errors are treated as critical failures that should be prominently flagged in Sentry.
-  /// Additional context can be provided through a [LogEvent].
-  ///
-  /// [error] - the critical error to log.
-  /// [stackTrace] - the stack trace associated with the critical error.
-  /// [event] - an optional [LogEvent] providing additional context for the critical error.
+  /// [entry] - The complete log entry containing fatal error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
+  Future<void> fatal(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log(
-          'Recording fatal error to Sentry',
-          name: 'SentryLogStrategy',
-        );
-        if (event != null) {
-          Sentry.captureException(error, stackTrace: stackTrace);
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final context = <String, dynamic>{};
+        if (entry.context != null) {
+          context.addAll(entry.context!);
         }
+        if (entry.event?.parameters != null) {
+          context.addAll(entry.event!.parameters!);
+        }
+
+        // Add context to Sentry
+        if (context.isNotEmpty) {
+          Sentry.configureScope((scope) {
+            context.forEach((key, value) {
+              scope.setExtra(key, value);
+            });
+          });
+        }
+
+        Sentry.captureException(entry.message, stackTrace: entry.stackTrace);
       }
     } catch (e, stack) {
       developer.log(

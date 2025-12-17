@@ -23,6 +23,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final stopwatch = Stopwatch()..start();
@@ -69,6 +70,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final stopwatch = Stopwatch()..start();
@@ -114,6 +116,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final stopwatch = Stopwatch()..start();
@@ -172,6 +175,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final isolateStopwatch = Stopwatch()..start();
@@ -238,6 +242,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final initialMemory = ProcessInfo.currentRss;
@@ -343,6 +348,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final stopwatch = Stopwatch()..start();

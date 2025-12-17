@@ -5,23 +5,73 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize Strategic Logger with console strategy only for demo
+    // Initialize Strategic Logger with multiple strategies
     // useIsolates is now auto-detected based on platform
     await logger.initialize(
       strategies: [
+        // Console Strategy - Always safe, shows logs in console
         ConsoleLogStrategy(
           useModernFormatting: true,
           useColors: true,
-          useEmojis: true,
           showTimestamp: true,
           showContext: true,
         ),
+
+        // Datadog Strategy - v2 API with compression (uncomment to use)
+        // DatadogLogStrategy(
+        //   apiKey: 'your-datadog-api-key',
+        //   service: 'example-app',
+        //   env: 'development',
+        //   enableCompression: true, // Gzip compression (default: true)
+        //   tags: 'team:mobile,version:1.4.0',
+        //   // Uses v2 endpoint: https://http-intake.logs.datadoghq.com/api/v2/logs
+        // ),
+
+        // Sentry Strategy - Error tracking (uncomment to use)
+        // SentryLogStrategy(),
+
+        // Firebase Strategies (uncomment if Firebase is configured)
+        // FirebaseAnalyticsLogStrategy(),
+        // FirebaseCrashlyticsLogStrategy(),
+
+        // New Relic Strategy (uncomment to use)
+        // NewRelicLogStrategy(
+        //   licenseKey: 'your-newrelic-license-key',
+        //   appName: 'example-app',
+        //   environment: 'development',
+        // ),
+
+        // ⚠️ MCP Strategy - NOT recommended for production mobile/web
+        // Only use in development with proper authentication
+        // MCPLogStrategy(
+        //   enableInMobile: false, // Disabled by default for security
+        //   apiKey: 'your-secret-key', // Required for production
+        //   enableRealTimeStreaming: false,
+        //   enableHealthMonitoring: false,
+        // ),
+
+        // ⚠️ AI Strategy - Use with caution (sends data to external services)
+        // AILogStrategy(
+        //   apiKey: 'your-openai-api-key',
+        //   enableAnalysis: false, // Disabled by default
+        //   enableInsights: false,
+        //   enableAnomalyDetection: false,
+        // ),
       ],
+      level: LogLevel.debug,
       enablePerformanceMonitoring: true,
       enableModernConsole: true,
     );
 
-    logger.info('Strategic Logger initialized successfully');
+    // Example: Log with structured context
+    await logger.info(
+      'Strategic Logger initialized successfully',
+      context: {
+        'appVersion': '1.4.0',
+        'platform': 'flutter',
+        'initializationTime': DateTime.now().toIso8601String(),
+      },
+    );
   } catch (e) {
     print('Error initializing logger: $e');
   }
@@ -250,7 +300,7 @@ class _LoggingDemoScreenState extends State<LoggingDemoScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildStatCard('Total Logs', _logCount.toString()),
-                        _buildStatCard('Strategies', '1'),
+                        _buildStatCard('Strategies', 'Console'),
                         _buildStatCard(
                           'Status',
                           _isPerformanceMode ? 'Testing' : 'Ready',

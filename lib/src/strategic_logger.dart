@@ -6,7 +6,6 @@ import 'core/isolate_manager.dart';
 import 'core/log_queue.dart';
 import 'core/performance_monitor.dart';
 import 'enums/log_level.dart';
-import 'strategies/console/console_log_strategy.dart';
 
 import 'errors/alread_initialized_error.dart';
 import 'errors/not_initialized_error.dart';
@@ -64,13 +63,14 @@ class StrategicLogger {
   List<LogStrategy> _strategies = [];
 
   // Modern features
-  late final LogQueue _logQueue;
+  LogQueue? _logQueue;
   bool _useIsolates = true;
   bool _enablePerformanceMonitoring = true;
   bool _enableModernConsole = true;
 
   /// Stream controller for real-time log updates
-  final _logStreamController = StreamController<LogEntry>.broadcast();
+  StreamController<LogEntry> _logStreamController =
+      StreamController<LogEntry>.broadcast();
 
   /// Stream of log entries for real-time console updates
   Stream<LogEntry> get logStream => _logStreamController.stream;
@@ -116,6 +116,7 @@ class StrategicLogger {
     bool? useIsolates, // Made nullable to allow auto-detection
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
+    bool force = false, // Allow re-initialization for testing
   }) async {
     // Auto-detect platform support for isolates
     final shouldUseIsolates = useIsolates ?? _isIsolateSupported();
@@ -123,6 +124,7 @@ class StrategicLogger {
     await logger._initialize(
       strategies: strategies,
       level: level,
+      force: force,
       useIsolates: shouldUseIsolates,
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
@@ -149,7 +151,45 @@ class StrategicLogger {
   }) async {
     if (_isInitialized && !force) {
       throw AlreadyInitializedError();
-    } else {
+    }
+
+    // If already initialized and force is true, dispose first
+    if (_isInitialized && force) {
+      // Clean up resources but keep _isInitialized false
+      try {
+        _logQueue?.dispose();
+        _logQueue = null;
+        if (_useIsolates) {
+          try {
+            isolateManager.dispose();
+          } catch (e) {
+            // Ignore
+          }
+        }
+        try {
+          performanceMonitor.dispose();
+        } catch (e) {
+          // Ignore
+        }
+        try {
+          if (!_logStreamController.isClosed) {
+            _logStreamController.close();
+          }
+        } catch (e) {
+          // Ignore
+        }
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+      _isInitialized = false;
+    }
+
+    if (!_isInitialized) {
+      // Recreate stream controller if closed
+      if (_logStreamController.isClosed) {
+        _logStreamController = StreamController<LogEntry>.broadcast();
+      }
+
       // Initialize modern features
       _useIsolates = useIsolates;
       _enablePerformanceMonitoring = enablePerformanceMonitoring;
@@ -161,12 +201,16 @@ class StrategicLogger {
       }
 
       // Initialize log queue
+      _logQueue?.dispose(); // Dispose existing if any
       _logQueue = LogQueue();
       _setupLogQueueListener();
 
       _initializeStrategies(strategies, level);
-      _printStrategicLoggerInit();
+
+      // Set initialized BEFORE printing (which may use logger methods)
       _isInitialized = true;
+
+      _printStrategicLoggerInit();
     }
     return logger;
   }
@@ -188,7 +232,7 @@ class StrategicLogger {
 
   /// Sets up the log queue listener for processing logs
   void _setupLogQueueListener() {
-    _logQueue.stream.listen((entry) async {
+    _logQueue!.stream.listen((entry) async {
       await _processLogEntry(entry);
     });
   }
@@ -196,7 +240,9 @@ class StrategicLogger {
   /// Processes a log entry using strategies
   Future<void> _processLogEntry(LogEntry entry) async {
     // Emit to stream for real-time console updates
-    _logStreamController.add(entry);
+    if (!_logStreamController.isClosed) {
+      _logStreamController.add(entry);
+    }
 
     if (_enablePerformanceMonitoring) {
       await performanceMonitor.measureOperation('processLogEntry', () async {
@@ -216,31 +262,19 @@ class StrategicLogger {
     try {
       switch (entry.level) {
         case LogLevel.debug:
-          await strategy.log(message: entry.message, event: entry.event);
+          await strategy.log(entry);
           break;
         case LogLevel.info:
-          await strategy.info(message: entry.message, event: entry.event);
+          await strategy.info(entry);
           break;
         case LogLevel.warning:
-          if (strategy is ConsoleLogStrategy) {
-            await strategy.logWithLevel(LogLevel.warning, message: entry.message, event: entry.event);
-          } else {
-            await strategy.log(message: entry.message, event: entry.event);
-          }
+          await strategy.log(entry);
           break;
         case LogLevel.error:
-          await strategy.error(
-            error: entry.message,
-            stackTrace: entry.stackTrace,
-            event: entry.event,
-          );
+          await strategy.error(entry);
           break;
         case LogLevel.fatal:
-          await strategy.fatal(
-            error: entry.message,
-            stackTrace: entry.stackTrace,
-            event: entry.event,
-          );
+          await strategy.fatal(entry);
           break;
         case LogLevel.none:
           // Do nothing
@@ -280,7 +314,10 @@ class StrategicLogger {
       context: context,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Logs a message or event using the configured strategies.
@@ -306,7 +343,10 @@ class StrategicLogger {
       context: context,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Logs an error using the configured strategies.
@@ -335,7 +375,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Logs a fatal error using the configured strategies.
@@ -364,7 +407,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous debug logging (compatibility with popular logger packages)
@@ -377,7 +423,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous info logging (compatibility with popular logger packages)
@@ -390,7 +439,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous warning logging (compatibility with popular logger packages)
@@ -403,7 +455,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous error logging (compatibility with popular logger packages)
@@ -416,7 +471,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous fatal logging (compatibility with popular logger packages)
@@ -429,7 +487,10 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Synchronous verbose logging (alias for debug)
@@ -466,7 +527,10 @@ class StrategicLogger {
       event: event,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Adds debug level logging
@@ -486,7 +550,10 @@ class StrategicLogger {
       context: context,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Adds warning level logging
@@ -506,7 +573,10 @@ class StrategicLogger {
       context: context,
     );
 
-    _logQueue.enqueue(entry);
+    if (_logQueue == null) {
+      throw NotInitializedError();
+    }
+    _logQueue!.enqueue(entry);
   }
 
   /// Adds verbose level logging (alias for debug)
@@ -520,7 +590,7 @@ class StrategicLogger {
 
   /// Forces flush of all queued logs
   void flush() {
-    _logQueue.flush();
+    _logQueue?.flush();
   }
 
   /// Gets performance statistics
@@ -532,12 +602,35 @@ class StrategicLogger {
 
   /// Disposes the logger and cleans up resources
   void dispose() {
-    _logQueue.dispose();
-    if (_useIsolates) {
-      isolateManager.dispose();
+    if (!_isInitialized) {
+      return; // Already disposed or never initialized
     }
-    performanceMonitor.dispose();
-    _logStreamController.close();
+    try {
+      _logQueue?.dispose();
+      _logQueue = null;
+    } catch (e) {
+      // Ignore errors during dispose
+      _logQueue = null;
+    }
+    if (_useIsolates) {
+      try {
+        isolateManager.dispose();
+      } catch (e) {
+        // Ignore errors during dispose
+      }
+    }
+    try {
+      performanceMonitor.dispose();
+    } catch (e) {
+      // Ignore errors during dispose
+    }
+    try {
+      if (!_logStreamController.isClosed) {
+        _logStreamController.close();
+      }
+    } catch (e) {
+      // Ignore errors during dispose
+    }
     _isInitialized = false;
   }
 
@@ -580,7 +673,9 @@ class StrategicLogger {
       message: logMessage,
       timestamp: DateTime.now(),
     );
-    _logStreamController.add(initLogEntry);
+    if (!_logStreamController.isClosed) {
+      _logStreamController.add(initLogEntry);
+    }
   }
 
   /// Generates ASCII art banner for the logger initialization
@@ -617,7 +712,7 @@ class StrategicLogger {
           return versionMatch.group(1)?.trim() ?? '1.2.2';
         }
       }
-      
+
       // Try to read from parent directory (for example apps)
       final parentPubspecFile = File('../pubspec.yaml');
       if (parentPubspecFile.existsSync()) {
@@ -632,7 +727,10 @@ class StrategicLogger {
       }
     } catch (e) {
       // Fallback if file reading fails
-      developer.log('Could not read version from pubspec.yaml: $e', name: 'StrategicLogger');
+      developer.log(
+        'Could not read version from pubspec.yaml: $e',
+        name: 'StrategicLogger',
+      );
     }
     return '1.2.2'; // Fallback version
   }

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:strategic_logger/logger_extension.dart';
 
+import '../../core/log_queue.dart';
 import 'firebase_crashlytics_log_event.dart';
 
 /// A [LogStrategy] implementation that logs messages and errors to Firebase Crashlytics.
@@ -33,27 +34,34 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
 
   /// Logs a message or a structured event to Firebase Crashlytics.
   ///
-  /// If an event is provided, the log will include structured data tailored for Firebase Crashlytics.
-  /// Otherwise, it logs a general message.
-  ///
-  /// [message] - a general message to log if no event is provided.
-  /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> log({dynamic message, LogEvent? event}) async {
+  Future<void> log(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log(
-          'Logging to Firebase Crashlytics',
-          name: 'FirebaseCrashlyticsLogStrategy',
-        );
-        if (event != null) {
-          if (event is FirebaseCrashlyticsLogEvent) {
-            FirebaseCrashlytics.instance.log(
-              '${event.eventName}: ${event.eventMessage}',
-            );
-          }
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final contextInfo = <String, dynamic>{};
+        if (entry.context != null) {
+          contextInfo.addAll(entry.context!);
+        }
+        if (entry.event?.parameters != null) {
+          contextInfo.addAll(entry.event!.parameters!);
+        }
+
+        // Set custom keys from context
+        if (contextInfo.isNotEmpty) {
+          contextInfo.forEach((key, value) {
+            FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
+          });
+        }
+
+        if (entry.event != null && entry.event is FirebaseCrashlyticsLogEvent) {
+          final crashlyticsEvent = entry.event as FirebaseCrashlyticsLogEvent;
+          FirebaseCrashlytics.instance.log(
+            '${crashlyticsEvent.eventName}: ${crashlyticsEvent.eventMessage ?? entry.message}',
+          );
         } else {
-          FirebaseCrashlytics.instance.log('Message: $message');
+          FirebaseCrashlytics.instance.log('Message: ${entry.message}');
         }
       }
     } catch (e, stack) {
@@ -68,53 +76,47 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
 
   /// Logs a message or a structured event to Firebase Crashlytics.
   ///
-  /// If an event is provided, the log will include structured data tailored for Firebase Crashlytics.
-  /// Otherwise, it logs a general message.
-  ///
-  /// [message] - a general message to log if no event is provided.
-  /// [event] - an optional [LogEvent] providing structured data for logging.
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
   @override
-  Future<void> info({dynamic message, LogEvent? event}) async {
-    try {
-      log(message: message, event: event);
-    } catch (e, stack) {
-      developer.log(
-        'Error during logging in Firebase Crashlytics Strategy',
-        name: 'FirebaseCrashlyticsLogStrategy',
-        error: e,
-        stackTrace: stack,
-      );
-    }
+  Future<void> info(LogEntry entry) async {
+    await log(entry);
   }
 
   /// Records an error or a structured event with an error to Firebase Crashlytics.
   ///
-  /// Errors are logged with their associated stack traces. If an event is provided,
-  /// additional context is included in the report.
-  ///
-  /// [error] - the error to log.
-  /// [stackTrace] - the stack trace associated with the error.
-  /// [event] - an optional [LogEvent] providing additional context for the error.
+  /// [entry] - The complete log entry containing error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> error({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
+  Future<void> error(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log(
-          'Reporting error to Firebase Crashlytics',
-          name: 'FirebaseCrashlyticsLogStrategy',
-        );
-        if (event != null && event is FirebaseCrashlyticsLogEvent) {
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final contextInfo = <String, dynamic>{};
+        if (entry.context != null) {
+          contextInfo.addAll(entry.context!);
+        }
+        if (entry.event?.parameters != null) {
+          contextInfo.addAll(entry.event!.parameters!);
+        }
+
+        // Set custom keys from context
+        if (contextInfo.isNotEmpty) {
+          contextInfo.forEach((key, value) {
+            FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
+          });
+        }
+
+        if (entry.event != null && entry.event is FirebaseCrashlyticsLogEvent) {
+          final crashlyticsEvent = entry.event as FirebaseCrashlyticsLogEvent;
           FirebaseCrashlytics.instance.recordError(
-            error,
-            stackTrace,
-            reason: event.eventMessage,
+            entry.message,
+            entry.stackTrace,
+            reason: crashlyticsEvent.eventMessage,
           );
         } else {
-          FirebaseCrashlytics.instance.recordError(error, stackTrace);
+          FirebaseCrashlytics.instance.recordError(
+            entry.message,
+            entry.stackTrace,
+          );
         }
       }
     } catch (e, stack) {
@@ -129,35 +131,39 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
 
   /// Marks an error as fatal and records it to Firebase Crashlytics.
   ///
-  /// Fatal errors are treated as critical failures that should be prominently flagged in Crashlytics.
-  /// Additional context can be provided through a [LogEvent].
-  ///
-  /// [error] - the critical error to log.
-  /// [stackTrace] - the stack trace associated with the critical error.
-  /// [event] - an optional [LogEvent] providing additional context for the critical error.
+  /// [entry] - The complete log entry containing fatal error message, level, timestamp, context, stackTrace, and event.
   @override
-  Future<void> fatal({
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-  }) async {
+  Future<void> fatal(LogEntry entry) async {
     try {
-      if (shouldLog(event: event)) {
-        developer.log(
-          'Recording fatal error to Firebase Crashlytics',
-          name: 'FirebaseCrashlyticsLogStrategy',
-        );
-        if (event != null && event is FirebaseCrashlyticsLogEvent) {
+      if (shouldLog(event: entry.event)) {
+        // Merge context from entry.context and event.parameters
+        final contextInfo = <String, dynamic>{};
+        if (entry.context != null) {
+          contextInfo.addAll(entry.context!);
+        }
+        if (entry.event?.parameters != null) {
+          contextInfo.addAll(entry.event!.parameters!);
+        }
+
+        // Set custom keys from context
+        if (contextInfo.isNotEmpty) {
+          contextInfo.forEach((key, value) {
+            FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
+          });
+        }
+
+        if (entry.event != null && entry.event is FirebaseCrashlyticsLogEvent) {
+          final crashlyticsEvent = entry.event as FirebaseCrashlyticsLogEvent;
           FirebaseCrashlytics.instance.recordError(
-            error,
-            stackTrace,
-            reason: event.eventMessage,
+            entry.message,
+            entry.stackTrace,
+            reason: crashlyticsEvent.eventMessage,
             fatal: true,
           );
         } else {
           FirebaseCrashlytics.instance.recordError(
-            error,
-            stackTrace,
+            entry.message,
+            entry.stackTrace,
             fatal: true,
           );
         }

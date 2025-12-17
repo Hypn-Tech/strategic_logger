@@ -1,3 +1,74 @@
+# 1.4.0
+
+## 🚀 Major Improvements - Strategic Logger 1.4.0
+
+> **✅ NO BREAKING CHANGES**: Backward compatible! Old custom strategies continue to work and now receive context automatically.
+> **✅ All built-in strategies updated**: Using new LogEntry interface for better context support.
+> **✅ Public API unchanged**: `logger.log()`, `logger.info()`, etc. work the same way.
+
+### ✨ New Features
+- **Full Context Support**: Context is now properly passed to all strategies
+- **Datadog v2 API**: Updated to use the official v2 endpoint with proper JSON format
+- **Gzip Compression**: Added optional gzip compression for Datadog logs (enabled by default)
+- **LogEntry-based Strategy Interface**: Strategies now receive complete LogEntry objects with full context
+
+### 🔧 Datadog Strategy Improvements
+- **v2 Endpoint**: Changed default URL from `https://http-intake.logs.datadoghq.com/v1/input` to `https://http-intake.logs.datadoghq.com/api/v2/logs`
+- **Gzip Compression**: Added `enableCompression` parameter (default: true) to reduce network overhead
+- **Proper v2 Format**: Logs now use Datadog v2 JSON format with `ddsource`, `ddtags`, `hostname`, `message`, `service`, `status`, `timestamp` fields
+- **Context Integration**: Context fields are now properly added to Datadog log entries for indexing and filtering
+
+### 📊 Context Propagation
+- **Full Context Support**: When calling `logger.log("message", context: {"user_id": 123})`, the context is now passed to all strategies
+- **Merged Context**: Context from both `entry.context` and `event.parameters` is merged and available to strategies
+- **Structured Fields**: Context fields are added directly to log entries in backends like Datadog for better indexing
+
+### 🔄 API Changes (Backward Compatible!)
+- **Strategy Interface**: Strategies can now receive `LogEntry` objects with full context
+  - New way: Override `log(LogEntry entry)`, `info(LogEntry entry)`, `error(LogEntry entry)`, `fatal(LogEntry entry)`
+  - Legacy way: Override `logMessage()` and `logError()` - **still works and now receives context automatically!**
+- **Default Implementations**: Methods have default implementations that delegate to legacy methods
+- **Zero Breaking Changes**: Old custom strategies continue to work without modification
+- **Context Now Available**: Even legacy strategies receive context automatically via `logMessage()` and `logError()`
+
+### 🎯 Updated Strategies
+- **ConsoleLogStrategy**: Now displays context information in formatted output
+- **DatadogLogStrategy**: Updated to v2 API with compression and proper context handling
+- **SentryLogStrategy**: Context is now added as Sentry extra fields
+- **FirebaseAnalyticsLogStrategy**: Context is merged into event parameters
+- **FirebaseCrashlyticsLogStrategy**: Context is added as custom keys
+- **NewRelicLogStrategy**: Context is included in log attributes
+- **MCPLogStrategy**: Context is merged into MCP log entries
+- **AILogStrategy**: Context is included in AI analysis
+
+### 🐛 Bug Fixes
+- **Context Not Passed**: Fixed issue where context was never passed to strategies
+- **Datadog Old Endpoint**: Updated to use current v2 endpoint
+- **Missing Compression**: Added gzip compression for network efficiency
+
+### 🔒 Security Improvements
+- **MCP Server Security**: Added authentication support and disabled by default in mobile/web
+- **Security Warnings**: Added clear warnings about MCP and AI strategy risks
+- **Mobile Protection**: MCP Server blocked by default in Flutter mobile apps
+- **Authentication**: Optional API key authentication for MCP Server
+- **Documentation**: Created SECURITY_ANALYSIS.md with detailed security assessment
+
+### 📚 Documentation
+- Updated README with Datadog v2 setup instructions
+- Added examples showing structured context usage
+- Updated CHANGELOG with comprehensive change list
+- Created BACKWARD_COMPATIBILITY.md explaining how legacy strategies work
+- Created example/legacy_strategy_example.dart demonstrating backward compatibility
+- Created SECURITY_ANALYSIS.md with security recommendations
+- Added security warnings for MCP and AI strategies
+
+
+### 📦 Dependencies
+- No new dependencies added
+- All existing dependencies remain compatible
+
+---
+
 # 1.3.0
 
 ## 🏢 Repository Transfer & Ownership Update - Strategic Logger 1.3.0

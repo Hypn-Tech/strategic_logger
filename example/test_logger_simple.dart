@@ -32,67 +32,85 @@ void main() async {
   print('\nTestando logs estruturados com contexto:\n');
 
   // Teste de logs estruturados com diferentes contextos
-  logger.info('Usuário fez login', context: {
-    'userId': '12345',
-    'email': 'usuario@exemplo.com',
-    'timestamp': DateTime.now().toIso8601String(),
-    'device': 'iPhone 15',
-    'appVersion': '2.1.0',
-  });
+  logger.info(
+    'Usuário fez login',
+    context: {
+      'userId': '12345',
+      'email': 'usuario@exemplo.com',
+      'timestamp': DateTime.now().toIso8601String(),
+      'device': 'iPhone 15',
+      'appVersion': '2.1.0',
+    },
+  );
 
-  logger.warning('Uso de memória alto', context: {
-    'memoryUsage': '85%',
-    'threshold': '80%',
-    'processId': '1234',
-    'timestamp': DateTime.now().toIso8601String(),
-  });
+  logger.warning(
+    'Uso de memória alto',
+    context: {
+      'memoryUsage': '85%',
+      'threshold': '80%',
+      'processId': '1234',
+      'timestamp': DateTime.now().toIso8601String(),
+    },
+  );
 
-  logger.error('Erro ao processar pagamento', context: {
-    'paymentId': 'pay_67890',
-    'amount': 99.99,
-    'currency': 'BRL',
-    'errorCode': 'INSUFFICIENT_FUNDS',
-    'userId': '12345',
-  });
+  logger.error(
+    'Erro ao processar pagamento',
+    context: {
+      'paymentId': 'pay_67890',
+      'amount': 99.99,
+      'currency': 'BRL',
+      'errorCode': 'INSUFFICIENT_FUNDS',
+      'userId': '12345',
+    },
+  );
 
   print('\nTestando logs de performance:\n');
 
   // Teste de logs de performance
   final stopwatch = Stopwatch()..start();
-  
+
   // Simular processamento pesado
   await Future.delayed(Duration(milliseconds: 150));
-  
+
   stopwatch.stop();
-  
-  logger.info('Processamento concluído', context: {
-    'duration': '${stopwatch.elapsedMilliseconds}ms',
-    'itemsProcessed': 150,
-    'memoryUsage': '45.2MB',
-    'cpuUsage': '23%',
-  });
+
+  logger.info(
+    'Processamento concluído',
+    context: {
+      'duration': '${stopwatch.elapsedMilliseconds}ms',
+      'itemsProcessed': 150,
+      'memoryUsage': '45.2MB',
+      'cpuUsage': '23%',
+    },
+  );
 
   print('\nTestando logs em lote com diferentes níveis:\n');
 
   // Teste de logs em lote com diferentes níveis
   for (int i = 1; i <= 10; i++) {
     if (i % 3 == 0) {
-      logger.error('Erro no item $i', context: {
-        'itemId': i,
-        'errorType': 'validation_error',
-        'progress': '${(i / 10 * 100).round()}%',
-      });
+      logger.error(
+        'Erro no item $i',
+        context: {
+          'itemId': i,
+          'errorType': 'validation_error',
+          'progress': '${(i / 10 * 100).round()}%',
+        },
+      );
     } else if (i % 2 == 0) {
-      logger.warning('Aviso no item $i', context: {
-        'itemId': i,
-        'warningType': 'slow_processing',
-        'progress': '${(i / 10 * 100).round()}%',
-      });
+      logger.warning(
+        'Aviso no item $i',
+        context: {
+          'itemId': i,
+          'warningType': 'slow_processing',
+          'progress': '${(i / 10 * 100).round()}%',
+        },
+      );
     } else {
-      logger.info('Processando item $i', context: {
-        'itemId': i,
-        'progress': '${(i / 10 * 100).round()}%',
-      });
+      logger.info(
+        'Processando item $i',
+        context: {'itemId': i, 'progress': '${(i / 10 * 100).round()}%'},
+      );
     }
   }
 
@@ -102,19 +120,27 @@ void main() async {
   try {
     throw Exception('Erro simulado para teste');
   } catch (e, stackTrace) {
-    logger.error(e, stackTrace: stackTrace, context: {
-      'errorType': 'simulated_exception',
-      'timestamp': DateTime.now().toIso8601String(),
-    });
+    logger.error(
+      e,
+      stackTrace: stackTrace,
+      context: {
+        'errorType': 'simulated_exception',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   try {
     throw StateError('Erro de estado crítico');
   } catch (e, stackTrace) {
-    logger.fatal(e, stackTrace: stackTrace, context: {
-      'errorType': 'critical_state_error',
-      'timestamp': DateTime.now().toIso8601String(),
-    });
+    logger.fatal(
+      e,
+      stackTrace: stackTrace,
+      context: {
+        'errorType': 'critical_state_error',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   print('\nTestando logs estruturados com LogEvent:\n');
@@ -152,11 +178,17 @@ void main() async {
   print('Estatísticas do logger:');
   print('- Total de logs: ${stats['totalLogs']}');
   print('- Logs por segundo: ${stats['logsPerSecond']?.toStringAsFixed(2)}');
-  print('- Tempo médio de processamento: ${stats['averageProcessingTime']?.toStringAsFixed(2)}ms');
+  print(
+    '- Tempo médio de processamento: ${stats['averageProcessingTime']?.toStringAsFixed(2)}ms',
+  );
 
-  print('\nTeste completo concluído! Verifique os logs acima para ver a formatação moderna do Strategic Logger.');
-  print('Todos os logs agora devem ter o formato: [HYPN-TECH][STRATEGIC-LOGGER][LEVEL]');
-  
+  print(
+    '\nTeste completo concluído! Verifique os logs acima para ver a formatação moderna do Strategic Logger.',
+  );
+  print(
+    'Todos os logs agora devem ter o formato: [HYPN-TECH][STRATEGIC-LOGGER][LEVEL]',
+  );
+
   // Limpar recursos
   logger.dispose();
 }

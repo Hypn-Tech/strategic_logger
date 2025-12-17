@@ -1,3 +1,4 @@
+import '../core/log_queue.dart';
 import '../enums/log_level.dart';
 import '../events/log_event.dart';
 
@@ -7,8 +8,31 @@ import '../events/log_event.dart';
 /// allowing for detailed control over how messages, errors, and fatal errors are logged
 /// depending on their level and the events they are associated with.
 ///
-/// Implementations of this class should define how messages, errors, and fatal errors
-/// are logged, potentially using different mechanisms or external systems.
+/// **New implementations (v1.4.0+):** Override `log()`, `info()`, `error()`, and `fatal()` methods
+/// that receive a complete `LogEntry` object with context.
+///
+/// **Legacy implementations:** Override `logMessage()` and `logError()` methods for backward
+/// compatibility. These methods now receive context automatically.
+///
+/// Example (new way):
+/// ```dart
+/// class MyStrategy extends LogStrategy {
+///   @override
+///   Future<void> log(LogEntry entry) async {
+///     // Use entry.message, entry.context, entry.event, etc.
+///   }
+/// }
+/// ```
+///
+/// Example (legacy way - still works):
+/// ```dart
+/// class MyLegacyStrategy extends LogStrategy {
+///   @override
+///   Future<void> logMessage(dynamic message, LogEvent? event, Map<String, dynamic>? context) async {
+///     // context is now available automatically!
+///   }
+/// }
+/// ```
 abstract class LogStrategy {
   /// The minimum log level that this strategy handles for logging.
   LogLevel logLevel;
@@ -43,31 +67,93 @@ abstract class LogStrategy {
     }
   }
 
-  /// Abstract method to log a message or event.
+  /// Logs a message or event.
   ///
-  /// [message] - The message or data to log.
-  /// [event] - Optional. The specific log event associated with the message.
-  Future<void> log({dynamic message, LogEvent? event});
+  /// **New implementations (v1.4.0+):** Override this method to receive a complete `LogEntry`.
+  ///
+  /// **Legacy implementations:** Override `logMessage()` instead for backward compatibility.
+  ///
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
+  Future<void> log(LogEntry entry) async {
+    // Default implementation: delegate to logMessage for backward compatibility
+    await logMessage(entry.message, entry.event, entry.context);
+  }
 
-  /// Abstract method to info a message or event (same as log()).
+  /// Logs an info message or event.
   ///
-  /// [message] - The message or data to log.
-  /// [event] - Optional. The specific log event associated with the message.
-  Future<void> info({dynamic message, LogEvent? event});
+  /// **New implementations (v1.4.0+):** Override this method to receive a complete `LogEntry`.
+  ///
+  /// **Legacy implementations:** Override `logMessage()` instead for backward compatibility.
+  ///
+  /// [entry] - The complete log entry containing message, level, timestamp, context, and event.
+  Future<void> info(LogEntry entry) async {
+    // Default implementation: delegate to logMessage for backward compatibility
+    await logMessage(entry.message, entry.event, entry.context);
+  }
 
-  /// Abstract method to log an error.
+  /// Logs an error.
   ///
-  /// [error] - The error object to log.
+  /// **New implementations (v1.4.0+):** Override this method to receive a complete `LogEntry`.
+  ///
+  /// **Legacy implementations:** Override `logError()` instead for backward compatibility.
+  ///
+  /// [entry] - The complete log entry containing error message, level, timestamp, context, stackTrace, and event.
+  Future<void> error(LogEntry entry) async {
+    // Default implementation: delegate to logError for backward compatibility
+    await logError(entry.message, entry.stackTrace, entry.event, entry.context);
+  }
+
+  /// Logs a fatal error.
+  ///
+  /// **New implementations (v1.4.0+):** Override this method to receive a complete `LogEntry`.
+  ///
+  /// **Legacy implementations:** Override `logError()` instead for backward compatibility.
+  ///
+  /// [entry] - The complete log entry containing fatal error message, level, timestamp, context, stackTrace, and event.
+  Future<void> fatal(LogEntry entry) async {
+    // Default implementation: delegate to logError for backward compatibility
+    await logError(entry.message, entry.stackTrace, entry.event, entry.context);
+  }
+
+  /// Legacy method for logging messages (for backward compatibility).
+  ///
+  /// **Legacy implementations:** Override this method to maintain compatibility with older code.
+  /// This method now receives `context` automatically, even if your strategy was written before v1.4.0.
+  ///
+  /// **New implementations:** Override `log()` and `info()` instead.
+  ///
+  /// [message] - The message to log.
+  /// [event] - Optional. The specific log event associated with the message.
+  /// [context] - Optional. Additional context data (now available automatically!).
+  Future<void> logMessage(
+    dynamic message,
+    LogEvent? event,
+    Map<String, dynamic>? context,
+  ) async {
+    // Default: empty implementation
+    // Legacy strategies should override this method
+  }
+
+  /// Legacy method for logging errors (for backward compatibility).
+  ///
+  /// **Legacy implementations:** Override this method to maintain compatibility with older code.
+  /// This method now receives `context` automatically, even if your strategy was written before v1.4.0.
+  ///
+  /// **New implementations:** Override `error()` and `fatal()` instead.
+  ///
+  /// [error] - The error to log.
   /// [stackTrace] - Optional. The stack trace associated with the error.
   /// [event] - Optional. The specific log event associated with the error.
-  Future<void> error({dynamic error, StackTrace? stackTrace, LogEvent? event});
-
-  /// Abstract method to log a fatal error.
-  ///
-  /// [error] - The error object to log as fatal.
-  /// [stackTrace] - Optional. The stack trace associated with the fatal error.
-  /// [event] - Optional. The specific log event associated with the fatal error.
-  Future<void> fatal({dynamic error, StackTrace? stackTrace, LogEvent? event});
+  /// [context] - Optional. Additional context data (now available automatically!).
+  Future<void> logError(
+    dynamic error,
+    StackTrace? stackTrace,
+    LogEvent? event,
+    Map<String, dynamic>? context,
+  ) async {
+    // Default: empty implementation
+    // Legacy strategies should override this method
+  }
 
   /// Provides a string representation of the strategy including its type and log level.
   @override

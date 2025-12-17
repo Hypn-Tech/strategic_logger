@@ -1,1 +1,21 @@
-.flutter-plugins-dependencies
+# Files and directories to exclude from pub.dev publication
+
+# Development documentation files
+GITHUB_ISSUES_RESPONSES.md
+GITHUB_ISSUES_RESPONSES_READY.md
+GITHUB_ISSUE_1.md
+GITHUB_ISSUE_2.md
+GITHUB_ISSUE_3.md
+PUBLISH_AND_ISSUES_READY.md
+PUBLISH_INSTRUCTIONS.md
+RELEASE_v1.4.0.md
+
+# Build artifacts
+build/
+coverage/
+
+# Generated documentation and development docs
+doc/
+
+# Test files in root
+test_logger.dart

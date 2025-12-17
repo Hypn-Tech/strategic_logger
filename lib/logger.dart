@@ -1,8 +1,8 @@
 /// Strategic Logger - Modern, high-performance logging framework for Flutter & Dart applications
-/// 
+///
 /// This package provides a comprehensive logging solution with multi-strategy support,
 /// isolate-based processing, and beautiful console output.
-library logger;
+// Library name removed - not necessary
 
 /// and other analytics integration.
 ///

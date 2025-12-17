@@ -32,6 +32,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Test logging with different levels
@@ -57,6 +58,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Log messages that might cause strategy failures
@@ -83,6 +85,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Generate logs that will use isolates for processing
@@ -118,6 +121,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Generate logs that might overwhelm isolates
@@ -173,6 +177,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         final initialMemory = ProcessInfo.currentRss;
@@ -208,6 +213,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Test with complex nested context
@@ -261,6 +267,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Test with various data types in context
@@ -292,6 +299,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Test with potentially problematic data
@@ -322,6 +330,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Test concurrent operations that might cause errors
@@ -415,6 +424,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Log some messages
@@ -447,6 +457,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Perform comprehensive logging workflow
@@ -509,6 +520,7 @@ void main() {
           useIsolates: true,
           enablePerformanceMonitoring: true,
           enableModernConsole: true,
+          force: true,
         );
 
         // Stress test with high volume
