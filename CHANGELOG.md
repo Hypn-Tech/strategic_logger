@@ -1,3 +1,26 @@
+# 1.4.2
+
+## 🔧 Bug Fixes - Strategic Logger 1.4.2
+
+### Fixed
+- Removed version display from console initialization banner to prevent version mismatch issues
+
+---
+
+# 1.4.1
+
+## 🔧 Bug Fixes - Strategic Logger 1.4.1
+
+### Fixed
+- Removed hardcoded version from console initialization banner
+- Removed `_getPackageVersion()` method that was causing version mismatch (was showing 1.2.2 instead of published version)
+- Removed unused `dart:io` import
+
+### Changed
+- Version display removed from ASCII art banner to avoid version synchronization issues when package is used as dependency
+
+---
+
 # 1.4.0
 
 ## 🚀 Major Improvements - Strategic Logger 1.4.0

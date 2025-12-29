@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'core/isolate_manager.dart';
 import 'core/log_queue.dart';
@@ -680,7 +679,6 @@ class StrategicLogger {
 
   /// Generates ASCII art banner for the logger initialization
   String _generateAsciiArt(String appName) {
-    final version = _getPackageVersion();
     return '''
 ███████████████████████████████████████████████████████████████████
 █          ___ _____ ___    _ _____ ___ ___ ___ ___               █
@@ -690,49 +688,11 @@ class StrategicLogger {
 █            / /   / __ \\/ ____/ ____/ ____/ __ \\                 █
 █           / /   / / / / / __/ / __/ __/ / /_/ /                 █
 █          / /___/ /_/ / /_/ / /_/ / /___/ _, _/                  █
-█         /_____/\\____/\\____/\\____/_____/_/ |_| v$version            █
+█         /_____/\\____/\\____/\\____/_____/_/ |_|                   █
 █                                                                 █
 █                       Powered by Hypn Tech                       █
 █                            (hypn.com.br)                        █
 ███████████████████████████████████████████████████████████████████''';
-  }
-
-  /// Gets the package version from pubspec.yaml
-  String _getPackageVersion() {
-    try {
-      // Try to read from pubspec.yaml in current directory
-      final pubspecFile = File('pubspec.yaml');
-      if (pubspecFile.existsSync()) {
-        final content = pubspecFile.readAsStringSync();
-        final versionMatch = RegExp(
-          r'^version:\s*(.+)$',
-          multiLine: true,
-        ).firstMatch(content);
-        if (versionMatch != null) {
-          return versionMatch.group(1)?.trim() ?? '1.2.2';
-        }
-      }
-
-      // Try to read from parent directory (for example apps)
-      final parentPubspecFile = File('../pubspec.yaml');
-      if (parentPubspecFile.existsSync()) {
-        final content = parentPubspecFile.readAsStringSync();
-        final versionMatch = RegExp(
-          r'^version:\s*(.+)$',
-          multiLine: true,
-        ).firstMatch(content);
-        if (versionMatch != null) {
-          return versionMatch.group(1)?.trim() ?? '1.2.2';
-        }
-      }
-    } catch (e) {
-      // Fallback if file reading fails
-      developer.log(
-        'Could not read version from pubspec.yaml: $e',
-        name: 'StrategicLogger',
-      );
-    }
-    return '1.2.2'; // Fallback version
   }
 
   /// Gets the application name from various sources

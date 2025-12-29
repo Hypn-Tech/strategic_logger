@@ -44,3 +44,4 @@ Documentação de exemplos:
 - [Compatibilidade com Versões Anteriores](guides/BACKWARD_COMPATIBILITY.md)
 - [Recomendações para Flutter Mobile](guides/FLUTTER_MOBILE_RECOMMENDATIONS.md)
 - [Status dos Exemplos](examples/EXAMPLE_STATUS.md)
+
