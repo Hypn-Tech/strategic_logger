@@ -91,14 +91,8 @@ class ConsoleLogStrategy extends LogStrategy {
     try {
       if (!shouldLog(event: entry.event)) return;
 
-      // Merge context from entry.context and event.parameters
-      final mergedContext = <String, dynamic>{};
-      if (entry.context != null) {
-        mergedContext.addAll(entry.context!);
-      }
-      if (entry.event?.parameters != null) {
-        mergedContext.addAll(entry.event!.parameters!);
-      }
+      // Use the unified mergedContext getter
+      final mergedContext = entry.mergedContext;
 
       String formattedMessage;
 

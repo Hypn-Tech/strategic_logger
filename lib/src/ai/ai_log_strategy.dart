@@ -131,14 +131,8 @@ class AILogStrategy extends LogStrategy {
   /// Logs a message to the AI strategy
   Future<void> _logToAI(LogEntry entry) async {
     try {
-      // Merge context from entry.context and event.parameters
-      final mergedContext = <String, dynamic>{};
-      if (entry.context != null) {
-        mergedContext.addAll(entry.context!);
-      }
-      if (entry.event?.parameters != null) {
-        mergedContext.addAll(entry.event!.parameters!);
-      }
+      // Use the unified mergedContext getter with AI-specific additions
+      final mergedContext = Map<String, dynamic>.from(entry.mergedContext);
       if (entry.stackTrace != null) {
         mergedContext['stackTrace'] = entry.stackTrace.toString();
       }
@@ -146,7 +140,7 @@ class AILogStrategy extends LogStrategy {
       // Add AI-specific context
       mergedContext['ai_timestamp'] = DateTime.now().toIso8601String();
       mergedContext['ai_source'] = 'strategic_logger';
-      mergedContext['ai_version'] = '1.4.0';
+      mergedContext['ai_version'] = '2.0.0';
 
       // Create AI log entry
       final aiLogEntry = AILogEntry(

@@ -142,14 +142,8 @@ class MCPLogStrategy extends LogStrategy {
         await startServer();
       }
 
-      // Merge context from entry.context and event.parameters
-      final mergedContext = <String, dynamic>{};
-      if (entry.context != null) {
-        mergedContext.addAll(entry.context!);
-      }
-      if (entry.event?.parameters != null) {
-        mergedContext.addAll(entry.event!.parameters!);
-      }
+      // Use the unified mergedContext getter with stackTrace addition
+      final mergedContext = Map<String, dynamic>.from(entry.mergedContext);
       if (entry.stackTrace != null) {
         mergedContext['stackTrace'] = entry.stackTrace.toString();
       }

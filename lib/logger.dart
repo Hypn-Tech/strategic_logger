@@ -105,10 +105,3 @@ export 'src/mcp/mcp_log_strategy.dart';
 
 /// AI Log Strategy for intelligent log analysis
 export 'src/ai/ai_log_strategy.dart';
-
-// Performance & Optimization (v1.1.0)
-/// Object Pool for efficient memory management
-export 'src/core/object_pool.dart' hide LogEvent;
-
-/// Log Compression for bandwidth optimization
-export 'src/core/log_compression.dart';

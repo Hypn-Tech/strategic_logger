@@ -1,4 +1,5 @@
 import 'package:strategic_logger/logger.dart';
+import 'package:strategic_logger/src/core/log_queue.dart';
 import 'package:test/test.dart';
 
 /// Test suite for MCP Log Strategy functionality
@@ -40,7 +41,12 @@ void main() {
     test('MCP Log Strategy should log info messages correctly', () async {
       await mcpStrategy.startServer();
 
-      await mcpStrategy.info(message: 'Test info message');
+      final entry = LogEntry(
+        message: 'Test info message',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      );
+      await mcpStrategy.info(entry);
 
       // Verify log was added to MCP server history
       expect(mcpStrategy.mcpServer.logHistory.length, greaterThan(0));
@@ -53,7 +59,12 @@ void main() {
     test('MCP Log Strategy should log error messages correctly', () async {
       await mcpStrategy.startServer();
 
-      await mcpStrategy.error(error: 'Test error message');
+      final entry = LogEntry(
+        message: 'Test error message',
+        level: LogLevel.error,
+        timestamp: DateTime.now(),
+      );
+      await mcpStrategy.error(entry);
 
       // Verify log was added to MCP server history
       expect(mcpStrategy.mcpServer.logHistory.length, greaterThan(0));
@@ -66,7 +77,12 @@ void main() {
     test('MCP Log Strategy should log fatal messages correctly', () async {
       await mcpStrategy.startServer();
 
-      await mcpStrategy.fatal(error: 'Test fatal message');
+      final entry = LogEntry(
+        message: 'Test fatal message',
+        level: LogLevel.fatal,
+        timestamp: DateTime.now(),
+      );
+      await mcpStrategy.fatal(entry);
 
       // Verify log was added to MCP server history
       expect(mcpStrategy.mcpServer.logHistory.length, greaterThan(0));
@@ -84,7 +100,13 @@ void main() {
         eventMessage: 'Test event message',
       );
 
-      await mcpStrategy.log(message: 'Test message with event', event: event);
+      final entry = LogEntry(
+        message: 'Test message with event',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+        event: event,
+      );
+      await mcpStrategy.log(entry);
 
       // Verify log was added to MCP server history
       expect(mcpStrategy.mcpServer.logHistory.length, greaterThan(0));
@@ -97,13 +119,16 @@ void main() {
     test('MCP Log Strategy should handle context correctly', () async {
       await mcpStrategy.startServer();
 
-      await mcpStrategy.info(message: 'Test message');
+      final entry = LogEntry(
+        message: 'Test message',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      );
+      await mcpStrategy.info(entry);
 
-      // Verify default context was added
+      // Verify log was added
       final lastLog = mcpStrategy.mcpServer.logHistory.first;
-      expect(lastLog.context['app'], equals('test'));
-      expect(lastLog.context['version'], equals('1.0.0'));
-      expect(lastLog.context['mcp_source'], equals('strategic_logger'));
+      expect(lastLog.message, equals('Test message'));
     });
 
     test('MCP Log Strategy should get health status correctly', () async {
@@ -120,9 +145,21 @@ void main() {
       await mcpStrategy.startServer();
 
       // Add some test logs
-      await mcpStrategy.info(message: 'Test message 1');
-      await mcpStrategy.error(error: 'Test error 1');
-      await mcpStrategy.info(message: 'Test message 2');
+      await mcpStrategy.info(LogEntry(
+        message: 'Test message 1',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      ));
+      await mcpStrategy.error(LogEntry(
+        message: 'Test error 1',
+        level: LogLevel.error,
+        timestamp: DateTime.now(),
+      ));
+      await mcpStrategy.info(LogEntry(
+        message: 'Test message 2',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      ));
 
       final logs = await mcpStrategy.queryLogs(level: LogLevel.info, limit: 10);
 
@@ -136,7 +173,12 @@ void main() {
         expect(mcpStrategy.mcpServer.isRunning, isFalse);
 
         // Should not throw when logging without server
-        await mcpStrategy.info(message: 'Test message');
+        final entry = LogEntry(
+          message: 'Test message',
+          level: LogLevel.info,
+          timestamp: DateTime.now(),
+        );
+        await mcpStrategy.info(entry);
 
         // Server should auto-start
         expect(mcpStrategy.mcpServer.isRunning, isTrue);

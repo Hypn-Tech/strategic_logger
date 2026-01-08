@@ -61,8 +61,6 @@
 ### ⚡ **Performance First**
 - **Isolate-based processing** - Never block the main thread
 - **Async queue with backpressure** - Handle high log volumes efficiently
-- **Object pooling** - Optimized memory management
-- **Log compression** - Reduce network and storage overhead
 
 ### 🎯 **One Call, All Strategies**
 Log once and send to multiple destinations simultaneously - Console, Firebase, Sentry, Datadog, New Relic, MCP, and AI analysis.
@@ -155,8 +153,6 @@ void main() async {
 
 ### 🚀 **Performance Features**
 - **Isolate Processing** - Heavy operations run in background isolates
-- **Object Pooling** - Optimized memory management for high-performance apps
-- **Log Compression** - Intelligent compression to reduce network and storage overhead
 - **Performance Monitoring** - Built-in metrics and performance tracking
 - **Async Queue** - Efficient log processing with backpressure control
 - **Batch Processing** - Automatic batching for network strategies
@@ -483,52 +479,6 @@ loggerCompatibility.debug('Debug message');
 loggerCompatibility.info('Info message');
 loggerCompatibility.error('Error message');
 ```
-```
-
-### Object Pooling & Memory Optimization
-
-```dart
-// Initialize object pool for memory optimization
-final objectPool = ObjectPool();
-await objectPool.initialize();
-
-// Get pooled objects (automatically managed)
-final logEntry = objectPool.getLogEntry();
-final context = objectPool.getContextMap();
-
-// Use objects...
-logEntry.message = 'Optimized logging';
-context['userId'] = '12345';
-
-// Return to pool (automatic cleanup)
-objectPool.returnLogEntry(logEntry);
-objectPool.returnContextMap(context);
-
-// Get pool statistics
-final poolStats = objectPool.getStats();
-print('Pool Stats: $poolStats');
-```
-
-### Log Compression
-
-```dart
-// Initialize log compression
-final compression = LogCompression();
-await compression.startCompression();
-
-// Add logs for compression
-for (int i = 0; i < 1000; i++) {
-  await compression.addLogEntry(CompressibleLogEntry(
-    message: 'Log entry $i',
-    level: LogLevel.info,
-    timestamp: DateTime.now(),
-    context: {'iteration': i},
-  ));
-}
-
-// Get compression statistics
-final compressionStats = compression.getStats();
-print('Compression Stats: $compressionStats');
 ```
 
 ---

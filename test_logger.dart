@@ -9,7 +9,6 @@ void main() async {
       ConsoleLogStrategy(
         useModernFormatting: true,
         useColors: true,
-        useEmojis: true,
         showTimestamp: true,
         showContext: true,
       ),

@@ -1,4 +1,5 @@
 import 'package:strategic_logger/logger.dart';
+import 'package:strategic_logger/src/core/log_queue.dart';
 import 'package:test/test.dart';
 
 /// Test suite for AI Log Strategy functionality
@@ -51,7 +52,12 @@ void main() {
     test('AI Log Strategy should log info messages correctly', () async {
       aiStrategy.startAnalysis();
 
-      await aiStrategy.info(message: 'Test info message');
+      final entry = LogEntry(
+        message: 'Test info message',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      );
+      await aiStrategy.info(entry);
 
       // Verify log was added to buffer
       expect(aiStrategy.logBuffer.length, equals(1));
@@ -64,7 +70,12 @@ void main() {
     test('AI Log Strategy should log error messages correctly', () async {
       aiStrategy.startAnalysis();
 
-      await aiStrategy.error(error: 'Test error message');
+      final entry = LogEntry(
+        message: 'Test error message',
+        level: LogLevel.error,
+        timestamp: DateTime.now(),
+      );
+      await aiStrategy.error(entry);
 
       // Verify log was added to buffer
       expect(aiStrategy.logBuffer.length, equals(1));
@@ -77,7 +88,12 @@ void main() {
     test('AI Log Strategy should log fatal messages correctly', () async {
       aiStrategy.startAnalysis();
 
-      await aiStrategy.fatal(error: 'Test fatal message');
+      final entry = LogEntry(
+        message: 'Test fatal message',
+        level: LogLevel.fatal,
+        timestamp: DateTime.now(),
+      );
+      await aiStrategy.fatal(entry);
 
       // Verify log was added to buffer
       expect(aiStrategy.logBuffer.length, equals(1));
@@ -95,7 +111,13 @@ void main() {
         eventMessage: 'Test event message',
       );
 
-      await aiStrategy.log(message: 'Test message with event', event: event);
+      final entry = LogEntry(
+        message: 'Test message with event',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+        event: event,
+      );
+      await aiStrategy.log(entry);
 
       // Verify log was added to buffer
       expect(aiStrategy.logBuffer.length, equals(1));
@@ -110,7 +132,12 @@ void main() {
 
       // Fill buffer to batch size
       for (int i = 0; i < 5; i++) {
-        await aiStrategy.info(message: 'Test message $i');
+        final entry = LogEntry(
+          message: 'Test message $i',
+          level: LogLevel.info,
+          timestamp: DateTime.now(),
+        );
+        await aiStrategy.info(entry);
       }
 
       // Buffer should be empty after batch processing
@@ -120,7 +147,12 @@ void main() {
     test('AI Log Strategy should analyze critical logs immediately', () async {
       aiStrategy.startAnalysis();
 
-      await aiStrategy.error(error: 'Critical error');
+      final entry = LogEntry(
+        message: 'Critical error',
+        level: LogLevel.error,
+        timestamp: DateTime.now(),
+      );
+      await aiStrategy.error(entry);
 
       // Critical logs should trigger immediate analysis
       // Note: In a real test, you'd mock the AI analysis
@@ -179,9 +211,21 @@ void main() {
       aiStrategy.startAnalysis();
 
       // Add some test logs
-      await aiStrategy.info(message: 'Test message 1');
-      await aiStrategy.error(error: 'Test error 1');
-      await aiStrategy.info(message: 'Test message 2');
+      await aiStrategy.info(LogEntry(
+        message: 'Test message 1',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      ));
+      await aiStrategy.error(LogEntry(
+        message: 'Test error 1',
+        level: LogLevel.error,
+        timestamp: DateTime.now(),
+      ));
+      await aiStrategy.info(LogEntry(
+        message: 'Test message 2',
+        level: LogLevel.info,
+        timestamp: DateTime.now(),
+      ));
 
       final summary = await aiStrategy.generateLogSummary(
         timeRange: const Duration(minutes: 5),

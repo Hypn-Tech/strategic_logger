@@ -148,6 +148,18 @@ class LogEntry {
     );
   }
 
+  /// Merges context from entry.context and entry.event.parameters.
+  ///
+  /// This getter provides a unified view of all context data associated with
+  /// a log entry, combining both the direct context and any parameters from
+  /// the associated event. Use this in strategies instead of manually merging.
+  Map<String, dynamic> get mergedContext {
+    final result = <String, dynamic>{};
+    if (context != null) result.addAll(context!);
+    if (event?.parameters != null) result.addAll(event!.parameters!);
+    return result;
+  }
+
   /// Converts to map for serialization
   Map<String, dynamic> toMap() {
     return {

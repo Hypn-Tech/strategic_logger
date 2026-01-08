@@ -14,7 +14,6 @@ void main() {
       consoleStrategy = ConsoleLogStrategy(
         useModernFormatting: true,
         useColors: true,
-        useEmojis: true,
         showTimestamp: true,
         showContext: true,
       );

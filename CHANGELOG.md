@@ -1,3 +1,35 @@
+# 2.0.0
+
+## 🚀 Simplification Release - Strategic Logger 2.0.0
+
+> **Clean Architecture & Clean Code**: Removed ~1,900 lines of unused code following CLAUDE.md guidelines.
+
+### ⚠️ Breaking Changes
+- **Removed** `ObjectPool` class - was never integrated into the logger, zero impact
+- **Removed** `LogCompression` class - was never integrated into the logger, zero impact
+
+### ✨ New Features
+- **`LogEntry.mergedContext` getter** - Unified method to merge `entry.context` with `entry.event.parameters`
+- **CLAUDE.md** - Comprehensive development guidelines for contributors
+
+### 🔧 Improvements
+- All strategies now use `entry.mergedContext` for consistent context handling
+- Eliminated code duplication across 6 strategy implementations
+- Reduced codebase by ~1,900 lines of dead code
+- Better code organization following Clean Architecture principles
+
+### 📊 Code Quality
+- Removed unused `ObjectPool` (452 lines)
+- Removed unused `LogCompression` (508 lines)
+- Removed associated test files (~960 lines)
+- Simplified context merging pattern in all strategies
+
+### 🔄 Migration Notes
+- If you were importing `ObjectPool` or `LogCompression`, remove those imports (they were never functional)
+- All other code works without changes
+
+---
+
 # 1.4.2
 
 ## 🔧 Bug Fixes - Strategic Logger 1.4.2

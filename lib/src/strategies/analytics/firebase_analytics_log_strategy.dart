@@ -41,22 +41,15 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   Future<void> log(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final parameters = <String, Object>{};
-        if (entry.context != null) {
-          parameters.addAll(entry.context!.cast<String, Object>());
-        }
-        if (entry.event != null) {
-          if (entry.event is FirebaseAnalyticsLogEvent) {
-            final analyticsEvent = entry.event as FirebaseAnalyticsLogEvent;
-            if (analyticsEvent.parameters != null) {
-              parameters.addAll(analyticsEvent.parameters!);
-            }
-            _analytics.logEvent(
-              name: analyticsEvent.eventName,
-              parameters: parameters.isNotEmpty ? parameters : null,
-            );
-          }
+        // Use the unified mergedContext getter, cast for Firebase compatibility
+        final parameters = entry.mergedContext.cast<String, Object>();
+
+        if (entry.event != null && entry.event is FirebaseAnalyticsLogEvent) {
+          final analyticsEvent = entry.event as FirebaseAnalyticsLogEvent;
+          _analytics.logEvent(
+            name: analyticsEvent.eventName,
+            parameters: parameters.isNotEmpty ? parameters : null,
+          );
         }
       }
     } catch (e, stack) {
@@ -84,21 +77,16 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   Future<void> error(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
+        // Use the unified mergedContext getter with error-specific parameters
         final parameters = <String, Object>{
           'param_message': entry.message.toString(),
           'param_error':
               entry.stackTrace?.toString() ?? 'no_exception_provided',
+          ...entry.mergedContext.cast<String, Object>(),
         };
-        if (entry.context != null) {
-          parameters.addAll(entry.context!.cast<String, Object>());
-        }
         if (entry.event != null && entry.event is FirebaseAnalyticsLogEvent) {
           final analyticsEvent = entry.event as FirebaseAnalyticsLogEvent;
           parameters['param_event_type'] = analyticsEvent.eventName;
-          if (analyticsEvent.parameters != null) {
-            parameters.addAll(analyticsEvent.parameters!);
-          }
         }
         _analytics.logEvent(name: 'event_name_error', parameters: parameters);
       }
@@ -119,21 +107,16 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   Future<void> fatal(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
+        // Use the unified mergedContext getter with fatal-specific parameters
         final parameters = <String, Object>{
           'param_message': entry.message.toString(),
           'param_error':
               entry.stackTrace?.toString() ?? 'no_exception_provided',
+          ...entry.mergedContext.cast<String, Object>(),
         };
-        if (entry.context != null) {
-          parameters.addAll(entry.context!.cast<String, Object>());
-        }
         if (entry.event != null && entry.event is FirebaseAnalyticsLogEvent) {
           final analyticsEvent = entry.event as FirebaseAnalyticsLogEvent;
           parameters['param_event_type'] = analyticsEvent.eventName;
-          if (analyticsEvent.parameters != null) {
-            parameters.addAll(analyticsEvent.parameters!);
-          }
         }
         _analytics.logEvent(name: 'fatal_error', parameters: parameters);
       }

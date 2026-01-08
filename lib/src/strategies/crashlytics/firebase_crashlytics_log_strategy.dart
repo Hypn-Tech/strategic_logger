@@ -39,14 +39,8 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   Future<void> log(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final contextInfo = <String, dynamic>{};
-        if (entry.context != null) {
-          contextInfo.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          contextInfo.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final contextInfo = entry.mergedContext;
 
         // Set custom keys from context
         if (contextInfo.isNotEmpty) {
@@ -89,14 +83,8 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   Future<void> error(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final contextInfo = <String, dynamic>{};
-        if (entry.context != null) {
-          contextInfo.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          contextInfo.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final contextInfo = entry.mergedContext;
 
         // Set custom keys from context
         if (contextInfo.isNotEmpty) {
@@ -136,14 +124,8 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   Future<void> fatal(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final contextInfo = <String, dynamic>{};
-        if (entry.context != null) {
-          contextInfo.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          contextInfo.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final contextInfo = entry.mergedContext;
 
         // Set custom keys from context
         if (contextInfo.isNotEmpty) {

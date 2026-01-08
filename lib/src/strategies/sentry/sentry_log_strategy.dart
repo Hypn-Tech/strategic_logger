@@ -35,14 +35,8 @@ class SentryLogStrategy extends LogStrategy {
   Future<void> log(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final context = <String, dynamic>{};
-        if (entry.context != null) {
-          context.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          context.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final context = entry.mergedContext;
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
@@ -85,14 +79,8 @@ class SentryLogStrategy extends LogStrategy {
   Future<void> error(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final context = <String, dynamic>{};
-        if (entry.context != null) {
-          context.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          context.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final context = entry.mergedContext;
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
@@ -120,14 +108,8 @@ class SentryLogStrategy extends LogStrategy {
   Future<void> fatal(LogEntry entry) async {
     try {
       if (shouldLog(event: entry.event)) {
-        // Merge context from entry.context and event.parameters
-        final context = <String, dynamic>{};
-        if (entry.context != null) {
-          context.addAll(entry.context!);
-        }
-        if (entry.event?.parameters != null) {
-          context.addAll(entry.event!.parameters!);
-        }
+        // Use the unified mergedContext getter
+        final context = entry.mergedContext;
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
