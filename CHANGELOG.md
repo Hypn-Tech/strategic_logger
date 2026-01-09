@@ -1,3 +1,30 @@
+# 2.0.1
+
+## 🎨 Dynamic Banner & Documentation Update - Strategic Logger 2.0.1
+
+### ✨ New Features
+- **Dynamic Project Banner** - Your project name displayed in colored ASCII art at initialization!
+  ```dart
+  await logger.initialize(
+    projectName: 'MY APP',  // Shows "MY APP" in gradient ASCII art
+    strategies: [ConsoleLogStrategy()],
+  );
+  ```
+
+### 🎨 Visual Improvements
+- **Modern ASCII Banner** - Gradient colors (cyan → blue → magenta) like Claude Code CLI
+- **No more box borders** - Clean, modern look without `███` borders
+- **Dynamic text generation** - ASCII art generated from any project name
+- **Default banner** - Shows "STRATEGIC LOGGER" if no projectName provided
+
+### 📚 Documentation
+- Updated README.md with v2.0.0 changes and new banner examples
+- Updated example/example.dart with projectName usage
+- Fixed deprecated `useEmojis` parameter references in documentation
+- Updated roadmap to reflect v2.0.0 release
+
+---
+
 # 2.0.0
 
 ## 🚀 Simplification Release - Strategic Logger 2.0.0

@@ -66,6 +66,7 @@ class StrategicLogger {
   bool _useIsolates = true;
   bool _enablePerformanceMonitoring = true;
   bool _enableModernConsole = true;
+  String? _projectName;
 
   /// Stream controller for real-time log updates
   StreamController<LogEntry> _logStreamController =
@@ -109,6 +110,7 @@ class StrategicLogger {
   /// [useIsolates] - Whether to use isolates for heavy operations. Defaults to true.
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring. Defaults to true.
   /// [enableModernConsole] - Whether to enable modern console formatting. Defaults to true.
+  /// [projectName] - Custom project name to display in the banner. If not provided, uses default.
   Future<void> initialize({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
@@ -116,6 +118,7 @@ class StrategicLogger {
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
     bool force = false, // Allow re-initialization for testing
+    String? projectName,
   }) async {
     // Auto-detect platform support for isolates
     final shouldUseIsolates = useIsolates ?? _isIsolateSupported();
@@ -127,6 +130,7 @@ class StrategicLogger {
       useIsolates: shouldUseIsolates,
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
+      projectName: projectName,
     );
   }
 
@@ -140,6 +144,7 @@ class StrategicLogger {
   /// [useIsolates] - Whether to use isolates for heavy operations.
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring.
   /// [enableModernConsole] - Whether to enable modern console formatting.
+  /// [projectName] - Custom project name to display in the banner.
   Future<StrategicLogger> _initialize({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
@@ -147,7 +152,10 @@ class StrategicLogger {
     bool useIsolates = true,
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
+    String? projectName,
   }) async {
+    _projectName = projectName;
+
     if (_isInitialized && !force) {
       throw AlreadyInitializedError();
     }
@@ -677,37 +685,104 @@ class StrategicLogger {
     }
   }
 
-  /// Generates ASCII art banner for the logger initialization
+  /// Generates modern colored ASCII art banner for the logger initialization
   String _generateAsciiArt(String appName) {
+    // ANSI color codes for gradient effect (cyan -> blue -> magenta)
+    const reset = '\x1B[0m';
+    const bold = '\x1B[1m';
+    const cyan = '\x1B[36m';
+    const blue = '\x1B[34m';
+    const magenta = '\x1B[35m';
+    const dim = '\x1B[2m';
+
+    // Generate dynamic ASCII art for project name
+    final asciiName = _generateAsciiText(appName.toUpperCase());
+    final lines = asciiName.split('\n');
+
+    // Apply gradient colors to each line
+    final coloredLines = <String>[];
+    final colors = [cyan, cyan, blue, magenta];
+    for (int i = 0; i < lines.length; i++) {
+      final color = colors[i % colors.length];
+      coloredLines.add('$bold$color${lines[i]}$reset');
+    }
+
     return '''
-███████████████████████████████████████████████████████████████████
-█          ___ _____ ___    _ _____ ___ ___ ___ ___               █
-█         / __|_   _| _ \\  /_\\_   _| __/ __|_ _/ __|              █
-█         \\__ \\ | | |   / / _ \\| | | _| (_ || | (__               █
-█         |___/ |_| |_|_\\/_/ \\_\\_| |___\\___|___\\___|              █
-█            / /   / __ \\/ ____/ ____/ ____/ __ \\                 █
-█           / /   / / / / / __/ / __/ __/ / /_/ /                 █
-█          / /___/ /_/ / /_/ / /_/ / /___/ _, _/                  █
-█         /_____/\\____/\\____/\\____/_____/_/ |_|                   █
-█                                                                 █
-█                       Powered by Hypn Tech                       █
-█                            (hypn.com.br)                        █
-███████████████████████████████████████████████████████████████████''';
+${coloredLines.join('\n')}
+
+$dim  Strategic Logger powered by Hypn Tech (hypn.com.br)$reset''';
   }
 
-  /// Gets the application name from various sources
-  String _getAppName() {
-    try {
-      // Try to get app name from Flutter
-      if (!kIsWeb) {
-        // For mobile/desktop, we can try to get package name
-        return 'Flutter App';
-      } else {
-        // For web, try to get from document title
-        return 'Web App';
-      }
-    } catch (e) {
-      return 'Unknown App';
+  /// Generates ASCII art text from a string using a compact modern font
+  String _generateAsciiText(String text) {
+    // Compact 4-line ASCII font map
+    const Map<String, List<String>> font = {
+      'A': [' __ ', '|__|', '|  |', '    '],
+      'B': ['___ ', '|__]', '|__]', '    '],
+      'C': [' __ ', '|  ', '|__', '    '],
+      'D': ['___ ', '|  \\', '|__/', '    '],
+      'E': ['___ ', '|__ ', '|___', '    '],
+      'F': ['___ ', '|__ ', '|   ', '    '],
+      'G': [' __ ', '| _ ', '|__]', '    '],
+      'H': ['    ', '|__|', '|  |', '    '],
+      'I': ['___ ', ' |  ', '_|_ ', '    '],
+      'J': ['  _ ', '  | ', '|_| ', '    '],
+      'K': ['    ', '|_/ ', '| \\ ', '    '],
+      'L': ['    ', '|   ', '|___', '    '],
+      'M': ['    ', '|\\/|', '|  |', '    '],
+      'N': ['    ', '|\\ |', '| \\|', '    '],
+      'O': [' __ ', '|  |', '|__|', '    '],
+      'P': ['___ ', '|__]', '|   ', '    '],
+      'Q': [' __ ', '|  |', '|_\\|', '    '],
+      'R': ['___ ', '|__/', '|  \\', '    '],
+      'S': [' __ ', '[__ ', '___]', '    '],
+      'T': ['___', ' | ', ' | ', '   '],
+      'U': ['    ', '|  |', '|__|', '    '],
+      'V': ['    ', '|  |', ' \\/ ', '    '],
+      'W': ['    ', '|  |', '|/\\|', '    '],
+      'X': ['    ', '\\_/ ', '/ \\ ', '    '],
+      'Y': ['    ', '\\_/ ', ' |  ', '    '],
+      'Z': ['___', ' / ', '/__', '   '],
+      '0': [' _ ', '| |', '|_|', '   '],
+      '1': ['   ', ' | ', ' | ', '   '],
+      '2': [' _ ', ' _|', '|_ ', '   '],
+      '3': ['__ ', ' _|', '__|', '   '],
+      '4': ['   ', '|_|', '  |', '   '],
+      '5': [' _ ', '|_ ', ' _|', '   '],
+      '6': [' _ ', '|_ ', '|_|', '   '],
+      '7': ['__ ', '  |', '  |', '   '],
+      '8': [' _ ', '|_|', '|_|', '   '],
+      '9': [' _ ', '|_|', ' _|', '   '],
+      ' ': ['  ', '  ', '  ', '  '],
+      '_': ['   ', '   ', '___', '   '],
+      '-': ['   ', '___', '   ', '   '],
+      '.': ['  ', '  ', '. ', '  '],
+    };
+
+    // Build 4 lines of ASCII art
+    final line0 = StringBuffer();
+    final line1 = StringBuffer();
+    final line2 = StringBuffer();
+    final line3 = StringBuffer();
+
+    for (final char in text.split('')) {
+      final charArt = font[char] ?? font[' ']!;
+      line0.write(charArt[0]);
+      line1.write(charArt[1]);
+      line2.write(charArt[2]);
+      line3.write(charArt[3]);
     }
+
+    return '${line0.toString()}\n${line1.toString()}\n${line2.toString()}';
+  }
+
+  /// Gets the application name from initialization parameter or default
+  String _getAppName() {
+    // Use custom project name if provided during initialization
+    if (_projectName != null && _projectName!.isNotEmpty) {
+      return _projectName!;
+    }
+    // Default to Strategic Logger if no project name provided
+    return 'STRATEGIC LOGGER';
   }
 }

@@ -1,18 +1,18 @@
 # Strategic Logger
 
 ```
-███████████████████████████████████████████████████████████████████
-█          ___ _____ ___    _ _____ ___ ___ ___ ___               █
-█         / __|_   _| _ \  /_\_   _| __/ __|_ _/ __|              █
-█         \__ \ | | |   / / _ \| | | _| (_ || | (__               █
-█         |___/ |_| |_|_\/_/ \_\_| |___\___|___\___|              █
-█            / /   / __ \/ ____/ ____/ ____/ __ \                 █
-█           / /   / / / / / __/ / __/ __/ / /_/ /                 █
-█          / /___/ /_/ / /_/ / /_/ / /___/ _, _/                  █
-█         /_____/\____/\____/\____/_____/_/ |_|                   █
-█                                                                 █
-█          🚀 Powered by Hypn Tech (hypn.com.br)                  █
-███████████████████████████████████████████████████████████████████
+  ___  _____  ___    _  _____  ___  ___  ___  ___
+ / __||_   _|| _ \  /_\|_   _|| __|| __||_ _|/ __|
+ \__ \  | |  |   / / _ \ | |  | _| | |_  | || (__
+ |___/  |_|  |_|_\/_/ \_\|_|  |___||___||___|\___|
+
+  / /    / __ \ / ____| / ____|/ ____|| _ \
+ / /    | |  | | |  __ | |  __| |__   |   /
+/ /___ | |__| | |_| | | |_| ||  __| | |\ \
+/_____| \____/ \____| |\_____|\____||_| \_\
+
+              Powered by Hypn Tech
+                 hypn.com.br
 ```
 
 <div align="center">
@@ -83,7 +83,7 @@ Add Strategic Logger to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  strategic_logger: ^1.4.0
+  strategic_logger: ^2.0.0
 ```
 
 Then run:
@@ -94,26 +94,22 @@ flutter pub get
 ### Basic Usage
 
 ```dart
-import 'package:strategic_logger/strategic_logger.dart';
+import 'package:strategic_logger/logger.dart';
 
 void main() async {
   // Initialize once at app startup
   await logger.initialize(
+    projectName: 'My App',  // Your project name appears in the banner!
     level: LogLevel.debug,
-        strategies: [
+    strategies: [
       ConsoleLogStrategy(
         useModernFormatting: true,
         useColors: true,
-        useEmojis: true,
       ),
-      // MCP Strategy for AI agent integration
-      MCPLogStrategy(port: 3000),
-      // AI Strategy for intelligent analysis
-      AILogStrategy(),
       // Traditional strategies
-            FirebaseAnalyticsLogStrategy(),
-            FirebaseCrashlyticsLogStrategy(),
-        ],
+      FirebaseAnalyticsLogStrategy(),
+      FirebaseCrashlyticsLogStrategy(),
+    ],
     useIsolates: true,
     enablePerformanceMonitoring: true,
   );
@@ -122,6 +118,26 @@ void main() async {
   await logger.info('App started successfully');
   await logger.error('Something went wrong', stackTrace: StackTrace.current);
 }
+```
+
+When initialized, you'll see a beautiful colored banner with your project name:
+
+```
+           __ ___ ___
+|\/|\_/   |__|__]|__]
+|  | |    |  ||   |
+
+  Strategic Logger powered by Hypn Tech (hypn.com.br)
+```
+
+If you don't provide a `projectName`, it defaults to showing "STRATEGIC LOGGER":
+
+```
+ __ ______  __ ______  __ ___  __        __  __  __ ___ ___
+[__  | |__/|__| | |__ | _  |  |    |   |  || _ | _ |__ |__/
+___] | |  \|  | | |___|__]_|_ |__  |___|__||__]|__]|___|  \
+
+  Strategic Logger powered by Hypn Tech (hypn.com.br)
 ```
 
 ---
@@ -259,8 +275,7 @@ await logger.initialize(
     ConsoleLogStrategy(
       useModernFormatting: true,
       useColors: true,
-      useEmojis: true,
-    ),
+          ),
   ],
   enablePerformanceMonitoring: true,
 );
@@ -437,8 +452,7 @@ await logger.initialize(
     ConsoleLogStrategy(
       useModernFormatting: true,
       useColors: true,
-      useEmojis: true,
-      showTimestamp: true,
+            showTimestamp: true,
       showContext: true,
     ),
     SentryLogStrategy(
@@ -479,7 +493,6 @@ loggerCompatibility.debug('Debug message');
 loggerCompatibility.info('Info message');
 loggerCompatibility.error('Error message');
 ```
-```
 
 ---
 
@@ -513,8 +526,7 @@ await logger.initialize(
     ConsoleLogStrategy(
       useModernFormatting: true,
       useColors: true,
-      useEmojis: true,
-      showTimestamp: true,
+            showTimestamp: true,
       showContext: true,
     ),
     
@@ -707,8 +719,7 @@ await logger.initialize(
     ConsoleLogStrategy(
       useModernFormatting: true,
       useColors: true,
-      useEmojis: true,
-    ),
+          ),
   ],
   useIsolates: true,
   enablePerformanceMonitoring: true,
@@ -758,23 +769,22 @@ await logger.initialize(
 
 ## 🗺️ Roadmap
 
-### 🚀 **v2.0.0 - AI-Powered Enterprise Features (Q2 2025)**
-- [ ] **Advanced AI Integration** - GPT-4, Claude integration
-- [ ] **Enterprise Observability** - OpenTelemetry, distributed tracing
-- [ ] **Health Monitoring** - Application health monitoring and alerts
-- [ ] **Smart Analysis** - Automatic pattern detection and anomaly detection
+### ✅ **v2.0.0 - Simplification Release (Released)**
+- [x] **Code Cleanup** - Removed unused ObjectPool and LogCompression
+- [x] **Dynamic Banner** - Project name displayed in colored ASCII art
+- [x] **Context Propagation** - `mergedContext` getter for unified context access
+- [x] **Simplified API** - Cleaner strategy interface
 
-### 🔧 **v3.0.0 - Cloud Native & Ecosystem (Q3 2025)**
+### 🔧 **v2.1.0 - Developer Experience (Q2 2025)**
+- [ ] **HTTP Strategy Base Class** - Extract common patterns from Datadog/NewRelic
+- [ ] **Better Error Messages** - Improved initialization error handling
+- [ ] **Performance Improvements** - Reduce isolate overhead for simple operations
+
+### 🚀 **v3.0.0 - Cloud Native & Ecosystem (Q3 2025)**
 - [ ] **Grafana Integration** - Custom dashboards and intelligent alerts
 - [ ] **Prometheus Integration** - Detailed metrics and Kubernetes integration
 - [ ] **Developer Tools** - VS Code extension and CLI tools
-- [ ] **Cloud Native** - Kubernetes operator and Istio integration
-
-### 🌐 **v4.0.0 - AI-Powered Autonomous Logging (Q4 2025)**
-- [ ] **AI Insights Engine** - Predictive analysis and auto-healing
-- [ ] **Predictive Analytics** - Failure prediction and optimization
-- [ ] **Auto-Healing** - Automatic problem correction and prevention
-- [ ] **Strategy Marketplace** - Third-party strategies and custom plugins
+- [ ] **OpenTelemetry** - Distributed tracing support
 
 ---
 

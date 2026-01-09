@@ -12,7 +12,7 @@ class PerformanceMonitor {
   final Map<String, List<Duration>> _operationTimes = {};
   final Map<String, int> _operationCounts = {};
   final Map<String, int> _operationErrors = {};
-  final StreamController<PerformanceMetric> _metricsController =
+  StreamController<PerformanceMetric> _metricsController =
       StreamController<PerformanceMetric>.broadcast();
 
   /// Stream of performance metrics
@@ -68,15 +68,17 @@ class PerformanceMonitor {
           (_operationErrors[operationName] ?? 0) + 1;
     }
 
-    // Emit metric
-    _metricsController.add(
-      PerformanceMetric(
-        operationName: operationName,
-        duration: duration,
-        isError: isError,
-        timestamp: DateTime.now(),
-      ),
-    );
+    // Emit metric only if stream is not closed
+    if (!_metricsController.isClosed) {
+      _metricsController.add(
+        PerformanceMetric(
+          operationName: operationName,
+          duration: duration,
+          isError: isError,
+          timestamp: DateTime.now(),
+        ),
+      );
+    }
 
     // Keep only last 100 measurements per operation
     if (_operationTimes[operationName]!.length > 100) {
@@ -146,9 +148,12 @@ class PerformanceMonitor {
     _operationErrors.clear();
   }
 
-  /// Disposes the performance monitor
+  /// Disposes the performance monitor and recreates the stream controller
+  /// to allow reuse after reconfigure()
   void dispose() {
     _metricsController.close();
+    // Recreate controller to allow reuse (singleton pattern)
+    _metricsController = StreamController<PerformanceMetric>.broadcast();
   }
 }
 

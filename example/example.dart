@@ -1,27 +1,19 @@
 import 'package:strategic_logger/logger.dart';
 
-/// Example demonstrating the initialization, configuration, and usage of Strategic Logger with multiple log strategies.
+/// Example demonstrating Strategic Logger v2.0.0 features.
 ///
-/// This example initializes a logger with various strategies, including console logging,
-/// Firebase Crashlytics, and Firebase Analytics. It shows how to log simple messages,
-/// structured events, and handle reconfiguration of the logger based on environmental
-/// changes or specific application needs.
-///
-/// The logger is initialized with a default log level and strategies, which can be reconfigured
-/// as needed. The example also demonstrates how to log different types of events including
-/// errors and purchases, which can be useful for tracking application usage and issues.
-///
-/// New features demonstrated:
-/// - Modern console formatting with colors and emojis
+/// This example shows:
+/// - Dynamic project name banner (displayed in colored ASCII art!)
+/// - Modern console formatting with colors
 /// - Isolate-based processing for heavy operations
 /// - Performance monitoring
+/// - Context propagation to all strategies
+/// - Multi-strategy logging (Console, Firebase, Datadog, NewRelic)
 /// - Compatibility with popular logger packages
-/// - Async queue with backpressure control
-/// - MCP (Model Context Protocol) integration for AI agents
-/// - AI-powered log analysis and insights
 void main() async {
   // Initialize the logger once with its strategies and log level.
   await logger.initialize(
+    projectName: 'EXAMPLE APP', // Your project name in ASCII art!
     level: LogLevel
         .debug, // Define from which log level the logger will be triggered.
     strategies: [
