@@ -1,3 +1,41 @@
+# 2.0.2
+
+## 🖥️ Auto-Detect Terminal Colors - Strategic Logger 2.0.2
+
+### 🐛 Bug Fixes
+- **Fixed ANSI garbage on iOS/Android** - Colors now auto-disabled on platforms that don't support ANSI
+  - Before: `\^[[36m __ ______  __ ...\^[[0m` (garbage text)
+  - After: Clean, readable text without escape codes
+
+### ✨ New Features
+- **`TerminalCapabilities` class** - Detect if terminal supports ANSI colors
+  ```dart
+  if (TerminalCapabilities.supportsAnsiColors) {
+    // Use colored output
+  }
+  ```
+- **`autoDetectColors` parameter** in `ConsoleLogStrategy` (default: `true`)
+  ```dart
+  ConsoleLogStrategy(
+    useColors: true,           // User preference
+    autoDetectColors: true,    // Auto-detect if platform supports colors
+  )
+  ```
+
+### 🔧 Platform Behavior
+| Platform | ANSI Support | Behavior |
+|----------|--------------|----------|
+| iOS Simulator/Device | No | Plain text (no colors) |
+| Android (Logcat) | No | Plain text (no colors) |
+| macOS/Linux Terminal | Yes | Full colors |
+| Windows Terminal | Yes | Full colors |
+| Web | No | Plain text |
+
+### 📦 Exports
+- New export: `TerminalCapabilities` via `package:strategic_logger/logger.dart`
+
+---
+
 # 2.0.1
 
 ## 🎨 Dynamic Banner & Documentation Update - Strategic Logger 2.0.1

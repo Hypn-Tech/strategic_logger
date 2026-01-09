@@ -83,6 +83,12 @@ export 'src/compatibility/logger_sync_compatibility.dart';
 /// Modern console formatter with colors and emojis
 export 'src/console/modern_console_formatter.dart';
 
+/// Terminal capabilities detection for ANSI color support
+///
+/// Use this to check if the current terminal supports ANSI colors,
+/// or to force enable/disable colors for testing.
+export 'src/console/terminal_capabilities.dart';
+
 // New strategies
 /// Strategy for logging messages to Datadog
 export 'src/strategies/datadog/datadog_log_strategy.dart';

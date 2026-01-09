@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'console/terminal_capabilities.dart';
 import 'core/isolate_manager.dart';
 import 'core/log_queue.dart';
 import 'core/performance_monitor.dart';
@@ -685,8 +686,16 @@ class StrategicLogger {
     }
   }
 
-  /// Generates modern colored ASCII art banner for the logger initialization
+  /// Generates modern colored ASCII art banner for the logger initialization.
+  ///
+  /// Automatically detects if the terminal supports ANSI colors.
+  /// On iOS/Android, returns plain text to avoid garbage like `\^[[36m`.
   String _generateAsciiArt(String appName) {
+    // Check if terminal supports ANSI colors
+    if (!TerminalCapabilities.supportsAnsiColors) {
+      return _generatePlainAsciiArt(appName);
+    }
+
     // ANSI color codes for gradient effect (cyan -> blue -> magenta)
     const reset = '\x1B[0m';
     const bold = '\x1B[1m';
@@ -711,6 +720,15 @@ class StrategicLogger {
 ${coloredLines.join('\n')}
 
 $dim  Strategic Logger powered by Hypn Tech (hypn.com.br)$reset''';
+  }
+
+  /// Generates plain ASCII art banner without colors for terminals that don't support ANSI.
+  String _generatePlainAsciiArt(String appName) {
+    final asciiName = _generateAsciiText(appName.toUpperCase());
+    return '''
+$asciiName
+
+  Strategic Logger powered by Hypn Tech (hypn.com.br)''';
   }
 
   /// Generates ASCII art text from a string using a compact modern font

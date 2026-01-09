@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import '../../console/modern_console_formatter.dart';
+import '../../console/terminal_capabilities.dart';
 import '../../core/isolate_manager.dart';
 import '../../core/log_queue.dart';
 import '../../enums/log_level.dart';
@@ -37,7 +38,11 @@ class ConsoleLogStrategy extends LogStrategy {
   /// [logLevel] sets the log level at which this strategy becomes active.
   /// [supportedEvents] optionally specifies which types of [LogEvent] this strategy should handle.
   /// [useModernFormatting] enables modern console formatting with colors and emojis.
-  /// [useColors] enables colored output.
+  /// [useColors] enables colored output. When [autoDetectColors] is true (default),
+  /// this is combined with terminal capability detection.
+  /// [autoDetectColors] when true (default), automatically detects if the terminal
+  /// supports ANSI colors. iOS/Android consoles don't support ANSI, so colors are
+  /// disabled automatically to avoid garbage output like `\^[[36m`.
   /// [showTimestamp] shows timestamp in logs.
   /// [showContext] shows context information in logs.
   ConsoleLogStrategy({
@@ -45,10 +50,13 @@ class ConsoleLogStrategy extends LogStrategy {
     super.supportedEvents,
     bool useModernFormatting = true,
     bool useColors = true,
+    bool autoDetectColors = true,
     bool showTimestamp = true,
     bool showContext = true,
   }) : _useModernFormatting = useModernFormatting,
-       _useColors = useColors,
+       _useColors = autoDetectColors
+           ? (useColors && TerminalCapabilities.supportsAnsiColors)
+           : useColors,
        _showTimestamp = showTimestamp,
        _showContext = showContext;
 
