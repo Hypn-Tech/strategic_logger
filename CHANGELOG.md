@@ -1,3 +1,27 @@
+# 2.0.4
+
+## 🚀 Flutter SDK 3.38.6 Upgrade - Strategic Logger 2.0.4
+
+### ⚡ SDK & Dependencies
+- **Upgraded to Flutter SDK 3.38.6** - Latest stable version (Dart 3.10.7)
+- **Updated dependencies to highest compatible versions:**
+  - `firebase_analytics`: ^12.1.0 (was ^12.0.2)
+  - `firebase_crashlytics`: ^5.0.6 (was ^5.0.2)
+  - `sentry_flutter`: ^9.9.2 (was ^9.6.0)
+  - `collection`: ^1.19.1 (was ^1.18.0)
+  - `meta`: ^1.17.0 (was ^1.15.0)
+  - `ansicolor`: ^2.0.3 (was ^2.0.2)
+  - `build_runner`: ^2.10.4 (was ^2.4.13)
+  - `json_serializable`: ^6.11.2 (was ^6.8.0)
+  - `test`: ^1.26.3 (was ^1.24.9)
+  - `lints`: ^6.0.0 (was ^4.0.0)
+
+### 📝 Notes
+- All dependencies are at their highest versions compatible with Flutter SDK 3.38.6
+- `test` 1.29.0 and `json_serializable` 6.11.3 require newer Flutter SDK versions (not yet available on stable)
+
+---
+
 # 2.0.3
 
 ## 🎨 Banner & Version Display Improvements - Strategic Logger 2.0.3
