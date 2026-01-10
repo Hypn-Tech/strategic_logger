@@ -21,10 +21,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
-[![MCP](https://img.shields.io/badge/MCP-Enabled-green?style=for-the-badge&logo=openai&logoColor=white)](https://modelcontextprotocol.io/)
-[![AI-Powered](https://img.shields.io/badge/AI-Powered-purple?style=for-the-badge&logo=robot&logoColor=white)](#ai-powered-log-analysis)
 
-**The future of logging is here: AI-powered, MCP-native, high-performance logging framework**
+**Modern, high-performance logging framework for Flutter & Dart applications**
 
 </div>
 
@@ -46,29 +44,28 @@
 
 ## ✨ Why Strategic Logger?
 
-### 🤖 **MCP-Native Integration**
-- **Model Context Protocol** support for AI agent integration
-- **Native MCP server** with HTTP endpoints for log querying
-- **Real-time log streaming** to AI agents and tools
-- **Structured context** for intelligent log analysis
-
-### 🧠 **AI-Powered Intelligence**
-- **Intelligent log analysis** with pattern detection
-- **Automated insights** and recommendations
-- **Anomaly detection** for proactive monitoring
-- **Smart log summarization** for faster debugging
+### 🎯 **One Call, All Strategies**
+Log once and send to multiple destinations simultaneously - Console, Firebase, Sentry, Datadog, New Relic.
 
 ### ⚡ **Performance First**
 - **Isolate-based processing** - Never block the main thread
 - **Async queue with backpressure** - Handle high log volumes efficiently
-
-### 🎯 **One Call, All Strategies**
-Log once and send to multiple destinations simultaneously - Console, Firebase, Sentry, Datadog, New Relic, MCP, and AI analysis.
+- **Batch processing** - Automatic batching for network strategies
+- **Smart retry logic** - Exponential backoff for failed operations
 
 ### 🎨 **Beautiful Console Output**
-- **Modern formatting** with colors, emojis, and structured layout
+- **Auto-detect terminal capabilities** - iOS/Android safe, no ANSI garbage
+- **Modern formatting** with colors and structured layout
 - **Rich context display** with metadata and stack traces
 - **Timestamp precision** with millisecond accuracy
+- **Dynamic project banners** - Your app name in ASCII art
+
+### 🔌 **Enterprise-Ready Integrations**
+- **Firebase Analytics & Crashlytics** - Complete Firebase suite support
+- **Sentry** - Full error tracking integration
+- **Datadog** - APM and log management
+- **New Relic** - Application monitoring
+- **Custom strategies** - Extend with your own logging destinations
 
 ### 🔄 **Drop-in Replacement**
 100% compatible with popular logger packages - no code changes required!
@@ -144,121 +141,138 @@ ___] | |  \|  | | |___|__]_|_ |__  |___|__||__]|__]|___|  \
 
 ## 🎯 Features
 
-### 🤖 **MCP (Model Context Protocol) Features**
-- **Native MCP Server** - Built-in HTTP server for AI agent integration
-- **Real-time Log Streaming** - Stream logs directly to AI agents and tools
-- **Structured Context API** - Rich metadata for intelligent log analysis
-- **Health Monitoring** - Built-in health endpoints and metrics
-- **Query Interface** - Advanced log querying with filtering and search
-- **WebSocket Support** - Real-time bidirectional communication
-
-### 🧠 **AI-Powered Features**
-- **Intelligent Log Analysis** - Automated pattern detection and anomaly identification
-- **Smart Insights** - AI-generated recommendations and actionable insights
-- **Automated Summarization** - Intelligent log summarization for faster debugging
-- **Predictive Analytics** - Proactive monitoring with predictive insights
-- **Context-Aware Processing** - AI understands log context and relationships
-- **Natural Language Queries** - Query logs using natural language
+### 🔌 **Logging Strategies**
+- **ConsoleLogStrategy** - Beautiful console output with ANSI color auto-detection
+- **FirebaseAnalyticsLogStrategy** - Track events in Firebase Analytics
+- **FirebaseCrashlyticsLogStrategy** - Report crashes and errors to Firebase Crashlytics
+- **SentryLogStrategy** - Full Sentry integration for error tracking
+- **DatadogLogStrategy** - APM and log management with HTTP batching
+- **NewRelicLogStrategy** - Application monitoring with retry logic
+- **Custom Strategies** - Extend `LogStrategy` for your own destinations
 
 ### 🔧 **Core Features**
-- **Multiple Log Strategies** - Console, Firebase, Sentry, Datadog, New Relic, MCP, AI
-- **Custom Strategies** - Extend with your own logging destinations
 - **Log Levels** - Debug, Info, Warning, Error, Fatal with intelligent routing
 - **Structured Logging** - Rich metadata and context support
+- **Event System** - Custom log events with parameters
+- **Context Propagation** - Automatic context merging from entries and events
 - **Error Handling** - Robust error management with predefined types
+- **Strategy Filtering** - Filter logs by level and event type per strategy
 
 ### 🚀 **Performance Features**
 - **Isolate Processing** - Heavy operations run in background isolates
 - **Performance Monitoring** - Built-in metrics and performance tracking
-- **Async Queue** - Efficient log processing with backpressure control
-- **Batch Processing** - Automatic batching for network strategies
-- **Retry Logic** - Exponential backoff for failed operations
+- **Async Queue** - Efficient log processing with backpressure control (1000 entry buffer)
+- **Batch Processing** - Automatic batching for HTTP strategies (100 entries or 5s timeout)
+- **Retry Logic** - Exponential backoff for failed network operations (3 retries max)
 
 ### 🎨 **Developer Experience**
-- **Modern Console** - Beautiful, colorful, emoji-rich output
+- **Modern Console** - Beautiful, colorful output with automatic terminal detection
+- **Dynamic Banners** - Your project name displayed in ASCII art
 - **Compatibility Layer** - Drop-in replacement for popular logger packages
-- **Type Safety** - Full TypeScript-style type safety in Dart
+- **Type Safety** - Full type safety in Dart with comprehensive documentation
 - **Hot Reload** - Seamless development experience with Flutter
-- **Documentation** - Comprehensive API documentation and examples
+- **Platform Support** - Android, iOS, Linux, macOS, Web, Windows
 
 ---
 
-## ⚠️ MCP & AI Strategies - Security Considerations
+## 📊 Strategy Configuration
 
-### 🔒 Security Warnings
-
-**MCP Server:**
-- ⚠️ **NOT recommended for production mobile/web apps** without authentication
-- ⚠️ Exposes logs via HTTP server without authentication by default
-- ⚠️ **Disabled by default in mobile/web** for security
-- ✅ Only use in development or with proper authentication
-- ✅ Consider using only in local development environments
-
-**AI Strategy:**
-- ⚠️ Sends logs to external AI services (OpenAI, etc.)
-- ⚠️ Logs may contain sensitive data
-- ⚠️ May generate API costs
-- ✅ Use with caution and data sanitization
-- ✅ Opt-in explicitly
-
-### MCP Server (Development Only)
+### ConsoleLogStrategy - Beautiful Terminal Output
 
 ```dart
-// ⚠️ WARNING: Only use in development with proper understanding of risks
-// MCP Server exposes logs via HTTP without authentication by default
-
-// For development (local only):
-final mcpStrategy = MCPLogStrategy(
-  enableInMobile: false, // Disabled by default for security
-  apiKey: 'your-secret-key', // Recommended for any use
-);
-
-// For production (with authentication):
-final mcpStrategy = MCPLogStrategy(
-  enableInMobile: true, // Explicitly enabled
-  apiKey: 'strong-secret-key', // REQUIRED for production
-);
-
-await mcpStrategy.startServer();
-
-// Log with context
-await logger.log(
-  'User action',
-  context: {'userId': '12345', 'action': 'login'},
+await logger.initialize(
+  strategies: [
+    ConsoleLogStrategy(
+      logLevel: LogLevel.debug,
+      useModernFormatting: true,  // Rich formatting with colors
+      useColors: true,            // Enable ANSI colors
+      autoDetectColors: true,     // Auto-detect terminal capabilities (iOS/Android safe)
+      showTimestamp: true,        // Show timestamps
+      showContext: true,          // Show context data
+    ),
+  ],
 );
 ```
 
-### AI Strategy (Use with Caution)
+**Auto-detection ensures:**
+- ✅ No ANSI garbage (`\^[[36m`) on iOS Simulator/Android Logcat
+- ✅ Beautiful colors on macOS/Linux terminals
+- ✅ Windows Terminal support (WT_SESSION, TERM, COLORTERM detection)
+
+### Firebase Strategies - Analytics & Crashlytics
 
 ```dart
-// ⚠️ WARNING: Sends logs to external AI services
-// Ensure you understand data privacy implications
-
-final aiStrategy = AILogStrategy(
-  apiKey: 'your-openai-api-key',
-  enableAnalysis: false, // Disabled by default
-  // Consider sanitizing sensitive data before enabling
+await logger.initialize(
+  strategies: [
+    FirebaseAnalyticsLogStrategy(
+      logLevel: LogLevel.info,
+    ),
+    FirebaseCrashlyticsLogStrategy(
+      logLevel: LogLevel.error,  // Only errors and fatals
+    ),
+  ],
 );
 
-await logger.initialize(strategies: [aiStrategy]);
+// Logs automatically tracked in Firebase
+await logger.info('User logged in', context: {'userId': '123'});
+await logger.error('Payment failed', stackTrace: StackTrace.current);
+```
 
-// Logs will be sent to AI service for analysis
+### Sentry - Error Tracking
+
+```dart
+await logger.initialize(
+  strategies: [
+    SentryLogStrategy(
+      logLevel: LogLevel.error,  // Only log errors to Sentry
+    ),
+  ],
+);
+
+// Errors sent to Sentry with full context
 await logger.error(
-  'Error occurred',
-  context: {'errorCode': 500}, // Be careful with sensitive data
+  'API request failed',
+  context: {'endpoint': '/api/users', 'statusCode': 500},
+  stackTrace: StackTrace.current,
 );
 ```
 
-### MCP Endpoints (When Enabled)
+### Datadog - APM & Log Management
 
-The MCP server provides HTTP endpoints (⚠️ requires authentication in production):
+```dart
+await logger.initialize(
+  strategies: [
+    DatadogLogStrategy(
+      apiKey: 'your-datadog-api-key',
+      service: 'my-app',
+      env: 'production',
+      batchSize: 100,          // Batch 100 entries
+      batchTimeout: Duration(seconds: 5),  // Or send after 5 seconds
+      maxRetries: 3,           // Retry failed batches 3 times
+    ),
+  ],
+);
+```
 
-- `GET /health` - Server health and metrics
-- `GET /logs` - Retrieve recent logs with filtering (requires auth)
-- `POST /logs/query` - Advanced log querying (requires auth)
-- `GET /logs/stream` - Real-time log streaming (requires auth)
+**Features:**
+- Automatic batching (100 entries or 5 seconds)
+- Exponential backoff retry logic
+- HTTP client with proper error handling
 
-**Authentication:** Use `Authorization: Bearer <apiKey>` header when API key is set.
+### New Relic - Application Monitoring
+
+```dart
+await logger.initialize(
+  strategies: [
+    NewRelicLogStrategy(
+      licenseKey: 'your-newrelic-license',
+      appName: 'my-app',
+      batchSize: 50,
+      batchTimeout: Duration(seconds: 10),
+    ),
+  ],
+);
+```
 
 ---
 
@@ -334,22 +348,16 @@ await logger.initialize(
     ConsoleLogStrategy(useModernFormatting: true),
     SentryLogStrategy(dsn: 'your-sentry-dsn'),
     FirebaseCrashlyticsLogStrategy(),
+    FirebaseAnalyticsLogStrategy(),
     DatadogLogStrategy(
       apiKey: 'your-datadog-api-key',
       service: 'my-app',
       env: 'production',
-      enableCompression: true, // Gzip compression enabled by default
     ),
-    // ⚠️ MCP Strategy - NOT recommended for production mobile/web
-    // MCPLogStrategy(
-    //   enableInMobile: false, // Disabled by default for security
-    //   apiKey: 'your-secret-key', // Required for production
-    // ),
-    // ⚠️ AI Strategy - Use with caution (sends data to external services)
-    // AILogStrategy(
-    //   apiKey: 'your-openai-api-key',
-    //   enableAnalysis: false, // Disabled by default
-    // ),
+    NewRelicLogStrategy(
+      licenseKey: 'your-newrelic-license',
+      appName: 'my-app',
+    ),
   ],
 );
 
@@ -358,26 +366,13 @@ await logger.error('Critical system failure', context: {
   'component': 'payment_service',
   'severity': 'critical',
 });
-```
-
-### 🤖 AI-Powered Log Analysis
-
-```dart
-// Enable AI analysis for intelligent insights
-final aiStrategy = AILogStrategy(
-  apiKey: 'your-openai-api-key',
-  analysisInterval: Duration(minutes: 5),
-);
-
-await logger.initialize(
-  strategies: [aiStrategy],
-);
-
-// AI will automatically analyze patterns and provide insights
-await logger.info('High memory usage detected', context: {
-  'memory_usage': '85%',
-  'threshold': '80%',
-});
+// This error will be logged to:
+// - Console (with beautiful formatting)
+// - Sentry (error tracking)
+// - Firebase Crashlytics (crash reporting)
+// - Firebase Analytics (event tracking)
+// - Datadog (APM)
+// - New Relic (monitoring)
 ```
 
 ### 🔄 Real-time Log Streaming
@@ -552,19 +547,6 @@ await logger.initialize(
       appName: 'my-app',
       environment: 'production',
     ),
-    
-    // ⚠️ MCP Strategy - NOT recommended for production mobile/web
-    // Only use in development with proper authentication
-    // MCPLogStrategy(
-    //   enableInMobile: false, // Disabled by default for security
-    //   apiKey: 'your-secret-key', // Required for production
-    // ),
-    
-    // ⚠️ AI Strategy - Use with caution (sends data to external services)
-    // AILogStrategy(
-    //   apiKey: 'your-openai-api-key',
-    //   enableAnalysis: false, // Disabled by default
-    // ),
   ],
   
   // Modern features
@@ -744,14 +726,8 @@ await logger.initialize(
 ### 🏢 **Enterprise Applications**
 - **Microservices Architecture** - Centralized logging across distributed systems
 - **High-Traffic Applications** - Handle millions of logs with isolate-based processing
-- **Real-time Monitoring** - AI-powered anomaly detection and alerting
+- **Real-time Monitoring** - Multi-strategy logging to Datadog, New Relic, Sentry
 - **Compliance & Auditing** - Structured logging for regulatory requirements
-
-### 🤖 **AI & Machine Learning**
-- **Model Context Protocol** - Native integration with AI agents and tools
-- **Intelligent Log Analysis** - Automated pattern detection and insights
-- **Predictive Monitoring** - Proactive issue detection and prevention
-- **Natural Language Queries** - Query logs using conversational AI
 
 ### 📱 **Mobile & Flutter Applications**
 - **Cross-Platform Logging** - Consistent logging across iOS, Android, Web, Desktop
