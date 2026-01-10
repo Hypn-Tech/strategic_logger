@@ -1,3 +1,32 @@
+# 2.0.6
+
+## 🎨 Console Logging Improvements - Strategic Logger 2.0.6
+
+### Changed
+- **Simplified console log format** - Removed redundant `[HYPN-TECH][STRATEGIC-LOGGER]` prefixes from all logs
+- **Modern, clean output** - Now shows only essential information: icon, timestamp, level badge, and message
+- **Cleaner level badges** - Changed from background-heavy badges to simple colored text badges
+
+### Before (v2.0.5)
+```
+[HYPN-TECH][STRATEGIC-LOGGER][DEBUG] 10:52:59.390 [DEBUG] music_storage_path: null
+[HYPN-TECH][STRATEGIC-LOGGER][INFO] 10:52:59.397 [INFO] Found content at 2026-01-10
+```
+
+### After (v2.0.6)
+```
+🔍 10:52:59.390 [DEBUG] music_storage_path: null
+ℹ️  10:52:59.397 [INFO ] Found content at 2026-01-10
+```
+
+**Benefits:**
+- Less visual noise and clutter
+- Easier to scan and read logs
+- Follows modern logging best practices
+- Maintains all functionality (colors, context, timestamps)
+
+---
+
 # 2.0.5
 
 ## 🐛 Bug Fixes - Strategic Logger 2.0.5

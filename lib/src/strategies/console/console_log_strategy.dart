@@ -162,64 +162,8 @@ class ConsoleLogStrategy extends LogStrategy {
 
   /// Formats the log header with visual styling and colors
   String _formatLogHeader(LogLevel level, String message) {
-    if (!_useColors) {
-      // Fallback to simple format without colors
-      return '[HYPN-TECH][STRATEGIC-LOGGER][${level.name.toUpperCase()}] $message';
-    }
-
-    // ANSI color codes
-    const String reset = '\x1B[0m';
-    const String bold = '\x1B[1m';
-
-    // HYPN-TECH colors (teal/cyan theme)
-    const String hypnTechBg = '\x1B[46m'; // Cyan background
-    const String hypnTechText = '\x1B[30m'; // Black text on cyan background
-
-    // STRATEGIC-LOGGER colors (blue theme)
-    const String strategicLoggerBg = '\x1B[44m'; // Blue background
-    const String strategicLoggerText =
-        '\x1B[37m'; // White text on blue background
-
-    // Level colors
-    String levelBg;
-    String levelText;
-
-    switch (level) {
-      case LogLevel.debug:
-        levelBg = '\x1B[45m'; // Magenta background
-        levelText = '\x1B[37m'; // White text
-        break;
-      case LogLevel.info:
-        levelBg = '\x1B[42m'; // Green background
-        levelText = '\x1B[30m'; // Black text
-        break;
-      case LogLevel.warning:
-        levelBg = '\x1B[43m'; // Yellow background
-        levelText = '\x1B[30m'; // Black text
-        break;
-      case LogLevel.error:
-        levelBg = '\x1B[41m'; // Red background
-        levelText = '\x1B[37m'; // White text
-        break;
-      case LogLevel.fatal:
-        levelBg = '\x1B[101m'; // Bright red background
-        levelText = '\x1B[37m'; // White text
-        break;
-      case LogLevel.none:
-        levelBg = '\x1B[47m'; // White background
-        levelText = '\x1B[30m'; // Black text
-        break;
-    }
-
-    // Format the header with visual styling
-    final String hypnTechPart =
-        '$hypnTechBg$hypnTechText$bold HYPN-TECH $reset';
-    final String strategicLoggerPart =
-        '$strategicLoggerBg$strategicLoggerText$bold STRATEGIC-LOGGER $reset';
-    final String levelPart =
-        '$levelBg$levelText$bold ${level.name.toUpperCase()} $reset';
-
-    return '$hypnTechPart$strategicLoggerPart$levelPart$message';
+    // Simply return the message - the modern formatter already adds everything needed
+    return message;
   }
 
   /// Legacy message formatting for backward compatibility

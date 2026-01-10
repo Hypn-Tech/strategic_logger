@@ -23,20 +23,15 @@ class ModernConsoleFormatter {
   static const String _white = '\x1B[37m';
   static const String _gray = '\x1B[90m';
 
-  // Background colors
-  static const String _bgRed = '\x1B[41m';
-  static const String _bgGreen = '\x1B[42m';
-  static const String _bgYellow = '\x1B[43m';
-  static const String _bgCyan = '\x1B[46m';
 
-  // Emojis for different log levels
-  static const Map<LogLevel, String> _levelEmojis = {
-    LogLevel.debug: '[DEBUG]',
-    LogLevel.info: '[INFO]',
-    LogLevel.warning: '[WARN]',
-    LogLevel.error: '[ERROR]',
-    LogLevel.fatal: '[FATAL]',
-    LogLevel.none: '[NONE]',
+  // Icons for different log levels (simple and clean)
+  static const Map<LogLevel, String> _levelIcons = {
+    LogLevel.debug: '🔍',
+    LogLevel.info: 'ℹ️',
+    LogLevel.warning: '⚠️',
+    LogLevel.error: '❌',
+    LogLevel.fatal: '💥',
+    LogLevel.none: '·',
   };
 
   // Colors for different log levels
@@ -49,15 +44,6 @@ class ModernConsoleFormatter {
     LogLevel.none: _gray,
   };
 
-  // Background colors for different log levels
-  static const Map<LogLevel, String> _levelBgColors = {
-    LogLevel.debug: _bgCyan,
-    LogLevel.info: _bgGreen,
-    LogLevel.warning: _bgYellow,
-    LogLevel.error: _bgRed,
-    LogLevel.fatal: _bgRed,
-    LogLevel.none: '',
-  };
 
   /// Formats a log message with modern styling
   String formatLog({
@@ -74,9 +60,9 @@ class ModernConsoleFormatter {
   }) {
     final buffer = StringBuffer();
 
-    // Add emoji if enabled
+    // Add icon if enabled
     if (useEmojis) {
-      buffer.write('${_levelEmojis[level] ?? '[NONE]'} ');
+      buffer.write('${_levelIcons[level] ?? '·'} ');
     }
 
     // Add timestamp if enabled
@@ -128,14 +114,13 @@ class ModernConsoleFormatter {
     return timeStr;
   }
 
-  /// Formats level badge with color and background
+  /// Formats level badge with color (modern, clean style)
   String _formatLevelBadge(LogLevel level, bool useColors) {
     final levelName = level.name.toUpperCase().padRight(5);
 
     if (useColors) {
       final color = _levelColors[level] ?? _gray;
-      final bgColor = _levelBgColors[level] ?? '';
-      return '$color$_bold$bgColor $levelName $_reset';
+      return '$color$_bold[$levelName]$_reset';
     }
 
     return '[$levelName]';
