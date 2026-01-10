@@ -1,3 +1,35 @@
+# 2.0.5
+
+## 🐛 Bug Fixes - Strategic Logger 2.0.5
+
+### Fixed
+- **`reconfigure()` now preserves `projectName`** - When calling `reconfigure()` without providing a `projectName`, the logger now correctly preserves the project name from the initial `initialize()` call instead of resetting it to null
+- **Added `projectName` parameter to `reconfigure()`** - You can now optionally provide a new project name when reconfiguring
+
+### Example
+```dart
+// Initial setup with project name
+await logger.initialize(
+  projectName: 'My Amazing App',
+  strategies: [ConsoleLogStrategy()],
+);
+
+// Reconfigure preserves project name
+await logger.reconfigure(
+  strategies: [ConsoleLogStrategy(), SentryLogStrategy()],
+);
+// Banner still shows "My Amazing App"
+
+// Or provide a new project name
+await logger.reconfigure(
+  projectName: 'My Amazing App v2',
+  strategies: [ConsoleLogStrategy()],
+);
+// Banner now shows "My Amazing App v2"
+```
+
+---
+
 # 2.0.4
 
 ## 🚀 Flutter SDK 3.38.6 Upgrade - Strategic Logger 2.0.4

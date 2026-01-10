@@ -85,12 +85,14 @@ class StrategicLogger {
   /// [useIsolates] - Whether to use isolates for heavy operations. Defaults to true.
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring. Defaults to true.
   /// [enableModernConsole] - Whether to enable modern console formatting. Defaults to true.
+  /// [projectName] - Custom project name to display in the banner. If not provided, preserves the previous value.
   Future<void> reconfigure({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
     bool useIsolates = true,
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
+    String? projectName,
   }) async {
     await logger._initialize(
       strategies: strategies,
@@ -99,6 +101,7 @@ class StrategicLogger {
       useIsolates: useIsolates,
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
+      projectName: projectName,
     );
   }
 
@@ -155,7 +158,10 @@ class StrategicLogger {
     bool enableModernConsole = true,
     String? projectName,
   }) async {
-    _projectName = projectName;
+    // Only update project name if a new one is provided
+    if (projectName != null) {
+      _projectName = projectName;
+    }
     final isReconfiguration = _isInitialized && force;
 
     if (_isInitialized && !force) {
