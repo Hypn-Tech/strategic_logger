@@ -156,13 +156,14 @@ class StrategicLogger {
     String? projectName,
   }) async {
     _projectName = projectName;
+    final isReconfiguration = _isInitialized && force;
 
     if (_isInitialized && !force) {
       throw AlreadyInitializedError();
     }
 
     // If already initialized and force is true, dispose first
-    if (_isInitialized && force) {
+    if (isReconfiguration) {
       // Clean up resources but keep _isInitialized false
       try {
         _logQueue?.dispose();
@@ -218,7 +219,7 @@ class StrategicLogger {
       // Set initialized BEFORE printing (which may use logger methods)
       _isInitialized = true;
 
-      _printStrategicLoggerInit();
+      _printStrategicLoggerInit(isReconfiguration: isReconfiguration);
     }
     return logger;
   }
@@ -643,7 +644,7 @@ class StrategicLogger {
   }
 
   /// Prints initialization details of the logger, including whether it was a reconfiguration.
-  void _printStrategicLoggerInit() {
+  void _printStrategicLoggerInit({bool isReconfiguration = false}) {
     final appName = _getAppName();
 
     // ASCII Art Banner
@@ -653,10 +654,12 @@ class StrategicLogger {
         .map((s) => '[HYPN-TECH]     └─ ${s.toString()}')
         .join('\n');
 
+    final configType = isReconfiguration ? 'RECONFIGURATION' : 'CONFIGURATION';
+
     String logMessage = [
       asciiArt,
       '',
-      '[HYPN-TECH] STRATEGIC LOGGER CONFIGURATION',
+      '[HYPN-TECH] STRATEGIC LOGGER $configType',
       '[HYPN-TECH] Logger initialized successfully!',
       '[HYPN-TECH] CONFIGURATION:',
       '[HYPN-TECH]     • Log Level: $_initLogLevel',
@@ -717,6 +720,7 @@ class StrategicLogger {
     }
 
     return '''
+
 ${coloredLines.join('\n')}
 
 $dim  Strategic Logger powered by Hypn Tech (hypn.com.br)$reset''';
@@ -726,6 +730,7 @@ $dim  Strategic Logger powered by Hypn Tech (hypn.com.br)$reset''';
   String _generatePlainAsciiArt(String appName) {
     final asciiName = _generateAsciiText(appName.toUpperCase());
     return '''
+
 $asciiName
 
   Strategic Logger powered by Hypn Tech (hypn.com.br)''';
@@ -798,7 +803,13 @@ $asciiName
   String _getAppName() {
     // Use custom project name if provided during initialization
     if (_projectName != null && _projectName!.isNotEmpty) {
-      return _projectName!;
+      // Ensure version starts with lowercase 'v' and has space before it
+      final name = _projectName!;
+      // Replace patterns like "AppName V1.0.0" or "AppName v1.0.0" with "AppName v1.0.0"
+      return name.replaceAllMapped(
+        RegExp(r'\s+[Vv](\d+\.\d+\.\d+)'),
+        (match) => ' v${match.group(1)}',
+      );
     }
     // Default to Strategic Logger if no project name provided
     return 'STRATEGIC LOGGER';

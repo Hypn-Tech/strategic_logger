@@ -1,6 +1,6 @@
 name: strategic_logger
 description: Modern, high-performance logging framework for Flutter & Dart applications with multi-strategy logging, isolate-based processing, and beautiful console output.
-version: 2.0.2
+version: 2.0.3
 repository: https://github.com/Hypn-Tech/strategic_logger
 issue_tracker: https://github.com/Hypn-Tech/strategic_logger/issues
 homepage: https://github.com/Hypn-Tech/strategic_logger

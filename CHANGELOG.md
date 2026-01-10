@@ -1,3 +1,32 @@
+# 2.0.3
+
+## 🎨 Banner & Version Display Improvements - Strategic Logger 2.0.3
+
+### 🐛 Bug Fixes
+- **Fixed banner alignment** - Added newline before ASCII art to prevent "flutter:" prefix from displacing first line
+- **Fixed version display** - Normalized version format to lowercase 'v' with space (e.g., "DivineArt v0.1.3")
+
+### ✨ New Features
+- **RECONFIGURATION detection** - Banner now shows "STRATEGIC LOGGER RECONFIGURATION" when `force: true` is used
+  - First init: `STRATEGIC LOGGER CONFIGURATION`
+  - Reinit with force: `STRATEGIC LOGGER RECONFIGURATION`
+
+### 🔧 Visual Changes
+**Before:**
+```
+flutter: ___ ___     ___     ___  __ ___ ___       _        __
+|  \ |  |  | |  |\ ||__ |__||__/ |   |  || |   |    _|
+```
+
+**After:**
+```
+flutter:
+___ ___     ___     ___  __ ___ ___       _        __
+|  \ |  |  | |  |\ ||__ |__||__/ |   |  || |   |    _|
+```
+
+---
+
 # 2.0.2
 
 ## 🖥️ Auto-Detect Terminal Colors - Strategic Logger 2.0.2

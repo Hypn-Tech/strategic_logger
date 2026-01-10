@@ -1,7 +1,5 @@
 import 'dart:io' show Platform, stdout;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 /// Detects terminal capabilities for ANSI color support.
 ///
 /// This class provides automatic detection of whether the current
@@ -34,8 +32,8 @@ class TerminalCapabilities {
   }
 
   static bool _detectAnsiSupport() {
-    // Web never supports ANSI
-    if (kIsWeb) return false;
+    // Web never supports ANSI (use identical check for compile-time constant)
+    if (identical(0, 0.0)) return false;
 
     try {
       // iOS Simulator/Device: Flutter debug console doesn't support ANSI
