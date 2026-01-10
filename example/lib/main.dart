@@ -40,23 +40,6 @@ void main() async {
         //   appName: 'example-app',
         //   environment: 'development',
         // ),
-
-        // ⚠️ MCP Strategy - NOT recommended for production mobile/web
-        // Only use in development with proper authentication
-        // MCPLogStrategy(
-        //   enableInMobile: false, // Disabled by default for security
-        //   apiKey: 'your-secret-key', // Required for production
-        //   enableRealTimeStreaming: false,
-        //   enableHealthMonitoring: false,
-        // ),
-
-        // ⚠️ AI Strategy - Use with caution (sends data to external services)
-        // AILogStrategy(
-        //   apiKey: 'your-openai-api-key',
-        //   enableAnalysis: false, // Disabled by default
-        //   enableInsights: false,
-        //   enableAnomalyDetection: false,
-        // ),
       ],
       level: LogLevel.debug,
       enablePerformanceMonitoring: true,

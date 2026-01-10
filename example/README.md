@@ -46,16 +46,14 @@ This example app demonstrates all the features and capabilities of the Strategic
 
 ## Configuration
 
-The example app initializes Strategic Logger with all available strategies:
+The example app initializes Strategic Logger with production-ready strategies:
 
-- **Console Logging**: Beautiful console output with colors and emojis
+- **Console Logging**: Beautiful console output with auto-detect ANSI colors
 - **Sentry**: Error tracking and monitoring
 - **Firebase Crashlytics**: Crash reporting
-- **Firebase Analytics**: User analytics
-- **Datadog**: Application monitoring
-- **New Relic**: Performance monitoring
-- **MCP**: Model Context Protocol integration
-- **AI**: AI-powered log analysis
+- **Firebase Analytics**: User analytics and event tracking
+- **Datadog**: APM and log management with HTTP batching
+- **New Relic**: Application performance monitoring
 
 ## Usage
 
