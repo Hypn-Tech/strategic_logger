@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import '../../core/isolate_manager.dart';
 import '../../core/log_queue.dart';
 import '../../core/performance_monitor.dart';
 import '../../enums/log_level.dart';
@@ -65,6 +66,8 @@ class DatadogLogStrategy extends LogStrategy {
   /// [batchTimeout] - Maximum time to wait before sending batch (default: 5 seconds)
   /// [maxRetries] - Maximum number of retry attempts (default: 3)
   /// [retryDelay] - Delay between retry attempts (default: 1 second)
+  /// [useIsolate] - Whether to use isolates for batch preparation (JSON + compression).
+  ///   Defaults to TRUE because batch processing is heavy.
   /// [logLevel] - Minimum log level to process
   /// [supportedEvents] - Specific events to handle
   DatadogLogStrategy({
@@ -80,9 +83,10 @@ class DatadogLogStrategy extends LogStrategy {
     this.batchTimeout = const Duration(seconds: 5),
     this.maxRetries = 3,
     this.retryDelay = const Duration(seconds: 1),
+    bool useIsolate = true, // Default: TRUE (batch + compression are heavy)
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-  }) {
+  }) : super(useIsolate: useIsolate) {
     _startBatchTimer();
   }
 
@@ -305,21 +309,32 @@ class DatadogLogStrategy extends LogStrategy {
     request.headers.set('Content-Type', 'application/json');
     request.headers.set('DD-API-KEY', apiKey);
 
-    // Enable compression if requested
-    if (enableCompression) {
-      request.headers.set('Content-Encoding', 'gzip');
-    }
-
-    // Encode body
-    final jsonBody = jsonEncode(batch);
     List<int> bodyBytes;
 
-    if (enableCompression) {
-      // Compress using gzip
-      final encoder = GZipCodec();
-      bodyBytes = encoder.encode(utf8.encode(jsonBody));
+    if (useIsolate) {
+      // Prepare batch in isolate (JSON + optional compression)
+      try {
+        final prepared = await isolateManager.prepareBatch(
+          batch: batch,
+          compress: enableCompression,
+        );
+        bodyBytes = (prepared['body'] as List).cast<int>();
+        if (prepared['isCompressed'] == true) {
+          request.headers.set('Content-Encoding', 'gzip');
+        }
+      } catch (e) {
+        // Fallback to main thread processing
+        bodyBytes = _prepareBatchDirect(batch);
+        if (enableCompression) {
+          request.headers.set('Content-Encoding', 'gzip');
+        }
+      }
     } else {
-      bodyBytes = utf8.encode(jsonBody);
+      // Direct processing on main thread
+      bodyBytes = _prepareBatchDirect(batch);
+      if (enableCompression) {
+        request.headers.set('Content-Encoding', 'gzip');
+      }
     }
 
     // Write body
@@ -335,6 +350,16 @@ class DatadogLogStrategy extends LogStrategy {
         'Datadog API returned status ${response.statusCode}: ${response.reasonPhrase}',
       );
     }
+  }
+
+  /// Prepares batch directly on main thread (fallback or when useIsolate=false)
+  List<int> _prepareBatchDirect(List<Map<String, dynamic>> batch) {
+    final jsonBody = jsonEncode(batch);
+    if (enableCompression) {
+      final encoder = GZipCodec();
+      return encoder.encode(utf8.encode(jsonBody));
+    }
+    return utf8.encode(jsonBody);
   }
 
   /// Forces sending of all pending logs

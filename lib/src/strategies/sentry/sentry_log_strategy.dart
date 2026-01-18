@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:strategic_logger/logger_extension.dart';
+import '../../core/isolate_manager.dart';
 import '../../core/log_queue.dart';
 import '../../strategies/sentry/sentry_log_event.dart';
 
@@ -20,13 +22,22 @@ import '../../strategies/sentry/sentry_log_event.dart';
 /// );
 /// var logger = StrategicLogger(strategies: [sentryStrategy]);
 /// logger.error('Example error', stackTrace: StackTrace.current);
+///
+/// // Disable isolate if needed
+/// var sentryWithoutIsolate = SentryLogStrategy(useIsolate: false);
 /// ```
 class SentryLogStrategy extends LogStrategy {
   /// Constructs a [SentryLogStrategy].
   ///
   /// [logLevel] sets the log level at which this strategy becomes active.
   /// [supportedEvents] optionally specifies which types of [LogEvent] this strategy should handle.
-  SentryLogStrategy({super.logLevel = LogLevel.none, super.supportedEvents});
+  /// [useIsolate] whether to use isolates for context serialization.
+  ///   Defaults to TRUE because context can contain heavy data.
+  SentryLogStrategy({
+    super.logLevel = LogLevel.none,
+    super.supportedEvents,
+    bool useIsolate = true, // Default: TRUE (context serialization can be heavy)
+  }) : super(useIsolate: useIsolate);
 
   /// Logs a message or a structured event to Sentry.
   ///
@@ -40,8 +51,9 @@ class SentryLogStrategy extends LogStrategy {
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
+          final serializedContext = await _serializeContext(context);
           Sentry.configureScope((scope) {
-            scope.setContexts('log_context', context);
+            scope.setContexts('log_context', serializedContext);
           });
         }
 
@@ -84,8 +96,9 @@ class SentryLogStrategy extends LogStrategy {
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
+          final serializedContext = await _serializeContext(context);
           Sentry.configureScope((scope) {
-            scope.setContexts('log_context', context);
+            scope.setContexts('log_context', serializedContext);
           });
         }
 
@@ -113,8 +126,9 @@ class SentryLogStrategy extends LogStrategy {
 
         // Add context to Sentry using structured contexts
         if (context.isNotEmpty) {
+          final serializedContext = await _serializeContext(context);
           Sentry.configureScope((scope) {
-            scope.setContexts('log_context', context);
+            scope.setContexts('log_context', serializedContext);
           });
         }
 
@@ -128,5 +142,33 @@ class SentryLogStrategy extends LogStrategy {
         stackTrace: stack,
       );
     }
+  }
+
+  /// Serializes context using isolate or directly based on useIsolate flag.
+  Future<Map<String, dynamic>> _serializeContext(
+    Map<String, dynamic> context,
+  ) async {
+    if (useIsolate) {
+      try {
+        return await isolateManager.serializeContext(context);
+      } catch (e) {
+        // Fallback to direct serialization
+        return _serializeContextDirect(context);
+      }
+    }
+    return _serializeContextDirect(context);
+  }
+
+  /// Serializes context directly on main thread (fallback or when useIsolate=false)
+  Map<String, dynamic> _serializeContextDirect(Map<String, dynamic> context) {
+    final serialized = <String, dynamic>{};
+    context.forEach((key, value) {
+      if (value is Map || value is List) {
+        serialized[key] = jsonEncode(value);
+      } else {
+        serialized[key] = value.toString();
+      }
+    });
+    return serialized;
   }
 }

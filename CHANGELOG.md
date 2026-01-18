@@ -1,3 +1,62 @@
+# 2.1.0
+
+## ⚡ Per-Strategy Isolate Configuration - Strategic Logger 2.1.0
+
+### ✨ New Features
+- **Per-Strategy `useIsolate` Configuration** - Each strategy now has its own `useIsolate` parameter
+  - Configure isolate usage individually per strategy instead of globally
+  - Smart defaults based on operation weight (heavy operations default to `true`)
+  - User can override defaults at initialization time
+
+### 🔧 Strategy Defaults
+
+| Strategy | Default `useIsolate` | Reason |
+|----------|---------------------|--------|
+| **ConsoleLogStrategy** | `false` | Lightweight formatting, isolate overhead not worth it |
+| **DatadogLogStrategy** | `true` | Heavy batch JSON + GZip compression |
+| **NewRelicLogStrategy** | `true` | Heavy batch JSON serialization |
+| **SentryLogStrategy** | `true` | Context serialization can be heavy |
+| **FirebaseCrashlyticsLogStrategy** | `true` | Context serialization can be heavy |
+| **FirebaseAnalyticsLogStrategy** | `true` | Context serialization can be heavy |
+
+### 💡 Usage Examples
+
+```dart
+await logger.initialize(
+  strategies: [
+    // Uses default (false for Console - lightweight)
+    ConsoleLogStrategy(),
+
+    // Uses default (true for Firebase - heavy context)
+    FirebaseCrashlyticsLogStrategy(),
+    FirebaseAnalyticsLogStrategy(),
+
+    // User can override defaults
+    DatadogLogStrategy(apiKey: 'key', useIsolate: false),  // Force no isolate
+    SentryLogStrategy(useIsolate: true),                    // Force isolate
+  ],
+);
+```
+
+### 🔧 Technical Improvements
+- **Smart Pool Initialization** - Isolate pool only initialized if at least one strategy needs it
+- **New IsolateManager Tasks** - Added `prepareBatch` and `serializeContext` tasks
+- **Fallback Handling** - Automatic fallback to main thread if isolate fails
+- **Zero Breaking Changes** - All strategies work without modification (use defaults)
+
+### 📊 Operations Now Using Isolates
+
+| Strategy | Operation in Isolate |
+|----------|---------------------|
+| **Datadog** | JSON encoding + GZip compression of batches |
+| **NewRelic** | JSON encoding of batches |
+| **Sentry** | Context map serialization |
+| **Crashlytics** | Context map serialization |
+| **Analytics** | Context map serialization |
+| **Console** | Log formatting (when enabled) |
+
+---
+
 # 2.0.6
 
 ## 🎨 Console Logging Improvements - Strategic Logger 2.0.6

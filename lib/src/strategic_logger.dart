@@ -206,11 +206,20 @@ class StrategicLogger {
       }
 
       // Initialize modern features
-      _useIsolates = useIsolates;
       _enablePerformanceMonitoring = enablePerformanceMonitoring;
       _enableModernConsole = enableModernConsole;
 
-      // Initialize isolate manager if enabled
+      // Check if ANY strategy needs isolate
+      final anyStrategyUsesIsolate =
+          strategies?.any((s) => s.useIsolate) ?? false;
+
+      // Initialize isolate pool only if:
+      // 1. Global useIsolates is true
+      // 2. At least one strategy wants to use isolate
+      // 3. Platform supports isolates
+      _useIsolates =
+          useIsolates && anyStrategyUsesIsolate && _isIsolateSupported();
+
       if (_useIsolates) {
         await isolateManager.initialize();
       }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import '../../core/isolate_manager.dart';
 import '../../core/log_queue.dart';
 import '../../core/performance_monitor.dart';
 import '../../enums/log_level.dart';
@@ -56,6 +57,8 @@ class NewRelicLogStrategy extends LogStrategy {
   /// [batchTimeout] - Maximum time to wait before sending batch
   /// [maxRetries] - Maximum number of retry attempts
   /// [retryDelay] - Delay between retry attempts
+  /// [useIsolate] - Whether to use isolates for batch preparation (JSON serialization).
+  ///   Defaults to TRUE because batch processing is heavy.
   /// [logLevel] - Minimum log level to process
   /// [supportedEvents] - Specific events to handle
   NewRelicLogStrategy({
@@ -68,9 +71,10 @@ class NewRelicLogStrategy extends LogStrategy {
     this.batchTimeout = const Duration(seconds: 5),
     this.maxRetries = 3,
     this.retryDelay = const Duration(seconds: 1),
+    bool useIsolate = true, // Default: TRUE (batch serialization is heavy)
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-  }) {
+  }) : super(useIsolate: useIsolate) {
     _startBatchTimer();
   }
 
@@ -224,8 +228,25 @@ class NewRelicLogStrategy extends LogStrategy {
     request.headers.set('Content-Type', 'application/json');
     request.headers.set('Api-Key', licenseKey);
 
-    // Set body
-    final body = jsonEncode(batch);
+    String body;
+
+    if (useIsolate) {
+      // Prepare batch in isolate (JSON serialization)
+      try {
+        final prepared = await isolateManager.prepareBatch(
+          batch: batch,
+          compress: false, // NewRelic doesn't use compression
+        );
+        body = utf8.decode((prepared['body'] as List).cast<int>());
+      } catch (e) {
+        // Fallback to main thread processing
+        body = jsonEncode(batch);
+      }
+    } else {
+      // Direct processing on main thread
+      body = jsonEncode(batch);
+    }
+
     request.write(body);
 
     final response = await request.close();

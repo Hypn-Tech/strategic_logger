@@ -17,7 +17,7 @@ import '../log_strategy.dart';
 ///
 /// Features:
 /// - Modern console formatting with colors and emojis
-/// - Isolate-based processing for heavy operations
+/// - Optional isolate-based processing (disabled by default for performance)
 /// - Performance monitoring
 /// - Structured output with context and events
 ///
@@ -26,6 +26,9 @@ import '../log_strategy.dart';
 /// var consoleStrategy = ConsoleLogStrategy(logLevel: LogLevel.info);
 /// var logger = StrategicLogger(strategies: [consoleStrategy]);
 /// logger.log("A simple log message.");
+///
+/// // Enable isolate for heavy formatting (optional)
+/// var consoleWithIsolate = ConsoleLogStrategy(useIsolate: true);
 /// ```
 class ConsoleLogStrategy extends LogStrategy {
   final bool _useModernFormatting;
@@ -37,6 +40,8 @@ class ConsoleLogStrategy extends LogStrategy {
   ///
   /// [logLevel] sets the log level at which this strategy becomes active.
   /// [supportedEvents] optionally specifies which types of [LogEvent] this strategy should handle.
+  /// [useIsolate] whether to use isolates for log formatting. Defaults to FALSE
+  ///   because console formatting is lightweight. Set to true for heavy formatting loads.
   /// [useModernFormatting] enables modern console formatting with colors and emojis.
   /// [useColors] enables colored output. When [autoDetectColors] is true (default),
   /// this is combined with terminal capability detection.
@@ -48,6 +53,7 @@ class ConsoleLogStrategy extends LogStrategy {
   ConsoleLogStrategy({
     super.logLevel = LogLevel.none,
     super.supportedEvents,
+    bool useIsolate = false, // Console: default FALSE (lightweight operation)
     bool useModernFormatting = true,
     bool useColors = true,
     bool autoDetectColors = true,
@@ -58,7 +64,8 @@ class ConsoleLogStrategy extends LogStrategy {
            ? (useColors && TerminalCapabilities.supportsAnsiColors)
            : useColors,
        _showTimestamp = showTimestamp,
-       _showContext = showContext;
+       _showContext = showContext,
+       super(useIsolate: useIsolate);
 
   /// Logs a message or a structured event to the console.
   ///
@@ -105,30 +112,23 @@ class ConsoleLogStrategy extends LogStrategy {
       String formattedMessage;
 
       if (_useModernFormatting) {
-        // Use isolate for heavy formatting if available
-        try {
-          final formatted = await isolateManager.formatLog(
-            message: entry.message.toString(),
-            level: entry.level.name,
-            timestamp: entry.timestamp,
-            context: mergedContext.isNotEmpty ? mergedContext : null,
-          );
-          formattedMessage = formatted['formatted'] as String;
-        } catch (e) {
-          // Fallback to direct formatting
-          // Disable emojis since we're using the formatted header
-          formattedMessage = modernConsoleFormatter.formatLog(
-            level: entry.level,
-            message: entry.message.toString(),
-            timestamp: entry.timestamp,
-            event: entry.event,
-            stackTrace: entry.stackTrace,
-            useColors: _useColors,
-            useEmojis: false, // Disabled because we have formatted header
-            showTimestamp: _showTimestamp,
-            showContext: _showContext,
-            context: mergedContext.isNotEmpty ? mergedContext : null,
-          );
+        if (useIsolate) {
+          // Use isolate for heavy formatting
+          try {
+            final formatted = await isolateManager.formatLog(
+              message: entry.message.toString(),
+              level: entry.level.name,
+              timestamp: entry.timestamp,
+              context: mergedContext.isNotEmpty ? mergedContext : null,
+            );
+            formattedMessage = formatted['formatted'] as String;
+          } catch (e) {
+            // Fallback to direct formatting if isolate fails
+            formattedMessage = _formatDirect(entry, mergedContext);
+          }
+        } else {
+          // Direct formatting without isolate (default for Console)
+          formattedMessage = _formatDirect(entry, mergedContext);
         }
       } else {
         // Legacy formatting
@@ -158,6 +158,22 @@ class ConsoleLogStrategy extends LogStrategy {
         stackTrace: stack,
       );
     }
+  }
+
+  /// Formats a log entry directly without using isolate
+  String _formatDirect(LogEntry entry, Map<String, dynamic> mergedContext) {
+    return modernConsoleFormatter.formatLog(
+      level: entry.level,
+      message: entry.message.toString(),
+      timestamp: entry.timestamp,
+      event: entry.event,
+      stackTrace: entry.stackTrace,
+      useColors: _useColors,
+      useEmojis: false, // Disabled because we have formatted header
+      showTimestamp: _showTimestamp,
+      showContext: _showContext,
+      context: mergedContext.isNotEmpty ? mergedContext : null,
+    );
   }
 
   /// Formats the log header with visual styling and colors

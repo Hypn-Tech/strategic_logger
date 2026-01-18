@@ -43,15 +43,33 @@ abstract class LogStrategy {
   /// A list of specific [LogEvent] types that this strategy supports. If null, all events are considered supported.
   List<LogEvent>? supportedEvents;
 
+  /// Whether this strategy should use isolates for heavy operations.
+  ///
+  /// Each strategy defines its own default based on operation weight.
+  /// Users can override at initialization time.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Use default (true for most strategies, false for Console)
+  /// DatadogLogStrategy(apiKey: 'key', service: 'app', env: 'prod')
+  ///
+  /// // Override to disable isolate
+  /// DatadogLogStrategy(apiKey: 'key', service: 'app', env: 'prod', useIsolate: false)
+  /// ```
+  final bool useIsolate;
+
   /// Constructs a [LogStrategy].
   ///
   /// [loggerLogLevel] - The log level of the logger. Defaults to [LogLevel.none].
   /// [logLevel] - The minimum log level that this strategy will handle. Defaults to [LogLevel.none].
   /// [supportedEvents] - Optional. Specifies the events that are explicitly supported by this strategy.
+  /// [useIsolate] - Whether to use isolates for heavy operations. Defaults to true.
+  ///   Each concrete strategy may override this default based on operation weight.
   LogStrategy({
     this.loggerLogLevel = LogLevel.none,
     this.logLevel = LogLevel.none,
     this.supportedEvents,
+    this.useIsolate = true,
   });
 
   /// Determines whether a log operation should proceed based on the event and log level.

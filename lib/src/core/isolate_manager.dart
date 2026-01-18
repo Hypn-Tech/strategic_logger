@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:meta/meta.dart';
@@ -75,6 +77,12 @@ class IsolateManager {
             case 'compressLog':
               result = await _compressLog(data);
               break;
+            case 'prepareBatch':
+              result = await _prepareBatch(data);
+              break;
+            case 'serializeContext':
+              result = await _serializeContext(data);
+              break;
             default:
               result = {'error': 'Unknown task: $task'};
           }
@@ -137,6 +145,53 @@ class IsolateManager {
       'compressedSize': (logData.toString().length * 0.7).round(),
       'data': logData,
     };
+  }
+
+  /// Prepares a batch for HTTP strategies (Datadog/NewRelic).
+  /// Performs JSON encoding and optional GZip compression.
+  static Future<Map<String, dynamic>> _prepareBatch(dynamic data) async {
+    final batchData = data as Map<String, dynamic>;
+    final batch = (batchData['batch'] as List).cast<Map<String, dynamic>>();
+    final compress = batchData['compress'] as bool? ?? false;
+
+    // JSON encode
+    final jsonBody = jsonEncode(batch);
+
+    if (compress) {
+      // GZip compression
+      final encoder = GZipCodec();
+      final compressed = encoder.encode(utf8.encode(jsonBody));
+      return {
+        'body': compressed,
+        'isCompressed': true,
+        'originalSize': jsonBody.length,
+        'compressedSize': compressed.length,
+      };
+    }
+
+    return {
+      'body': utf8.encode(jsonBody),
+      'isCompressed': false,
+      'size': jsonBody.length,
+    };
+  }
+
+  /// Serializes context for Firebase/Sentry strategies.
+  /// Converts complex objects (Map, List) to JSON strings.
+  static Future<Map<String, dynamic>> _serializeContext(dynamic data) async {
+    final contextData = data as Map<String, dynamic>;
+
+    // Process and serialize each context value
+    final serialized = <String, dynamic>{};
+    contextData.forEach((key, value) {
+      if (value is Map || value is List) {
+        serialized[key] = jsonEncode(value);
+      } else {
+        serialized[key] = value.toString();
+      }
+    });
+
+    return serialized;
   }
 
   /// Executes a task in an available isolate
@@ -202,6 +257,29 @@ class IsolateManager {
   /// Compresses log data using isolate
   Future<Map<String, dynamic>> compressLog(Map<String, dynamic> data) async {
     return executeInIsolate('compressLog', data);
+  }
+
+  /// Prepares a batch for HTTP transmission (JSON + optional compression).
+  ///
+  /// Used by HTTP strategies like Datadog and NewRelic.
+  /// Returns a map with 'body' (List<int>), 'isCompressed' (bool), and size info.
+  Future<Map<String, dynamic>> prepareBatch({
+    required List<Map<String, dynamic>> batch,
+    bool compress = false,
+  }) async {
+    return executeInIsolate('prepareBatch', {
+      'batch': batch,
+      'compress': compress,
+    });
+  }
+
+  /// Serializes context for external SDKs (Firebase, Sentry).
+  ///
+  /// Converts complex objects (Map, List) to JSON strings for SDK compatibility.
+  Future<Map<String, dynamic>> serializeContext(
+    Map<String, dynamic> context,
+  ) async {
+    return executeInIsolate('serializeContext', context);
   }
 
   /// Disposes all isolates and cleans up resources
