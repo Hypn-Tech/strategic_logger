@@ -1,18 +1,11 @@
 # Strategic Logger
 
 ```
-  ___  _____  ___    _  _____  ___  ___  ___  ___
- / __||_   _|| _ \  /_\|_   _|| __|| __||_ _|/ __|
- \__ \  | |  |   / / _ \ | |  | _| | |_  | || (__
- |___/  |_|  |_|_\/_/ \_\|_|  |___||___||___|\___|
+ __ ______  __ ______  __ ___  __        __  __  __ ___ ___
+[__  | |__/|__| | |__ | _  |  |    |   |  || _ | _ |__ |__/
+___] | |  \|  | | |___|__]_|_ |__  |___|__||__]|__]|___|  \
 
-  / /    / __ \ / ____| / ____|/ ____|| _ \
- / /    | |  | | |  __ | |  __| |__   |   /
-/ /___ | |__| | |_| | | |_| ||  __| | |\ \
-/_____| \____/ \____| |\_____|\____||_| \_\
-
-              Powered by Hypn Tech
-                 hypn.com.br
+  Strategic Logger powered by Hypn Tech (hypn.com.br)
 ```
 
 <div align="center">
@@ -135,15 +128,7 @@ void main() async {
 }
 ```
 
-When initialized with a `projectName`, you'll see a beautiful colored banner:
-
-```
-           __ ___ ___
-|\/|\_/   |__|__]|__]
-|  | |    |  ||   |
-
-  Strategic Logger powered by Hypn Tech (hypn.com.br)
-```
+When initialized with a `projectName`, you'll see a beautiful colored banner with your app name in ASCII art. Without a `projectName`, it defaults to "STRATEGIC LOGGER".
 
 ---
 
