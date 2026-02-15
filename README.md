@@ -30,7 +30,7 @@
 
 <div align="center">
 
-## 🏢 Sponsored by Hypn Tech
+## Sponsored by Hypn Tech
 
 [![Hypn Tech](https://hypn.com.br/wp-content/uploads/2024/05/marca-hypn-institucional-1536x738.png)](https://hypn.com.br)
 
@@ -42,37 +42,38 @@
 
 ---
 
-## ✨ Why Strategic Logger?
+## Why Strategic Logger?
 
-### 🎯 **One Call, All Strategies**
+### One Call, All Strategies
 Log once and send to multiple destinations simultaneously - Console, Firebase, Sentry, Datadog, New Relic.
 
-### ⚡ **Performance First**
+### Zero Configuration Required (v3.0.0)
+- **Auto-initialization** - Works out of the box, no setup needed
+- **Synchronous API** - No `await` required, just call `logger.info('msg')`
+- **Fire-and-forget** - Logging never blocks your app
+
+### Performance First
 - **Isolate-based processing** - Never block the main thread
 - **Async queue with backpressure** - Handle high log volumes efficiently
 - **Batch processing** - Automatic batching for network strategies
 - **Smart retry logic** - Exponential backoff for failed operations
 
-### 🎨 **Beautiful Console Output**
+### Beautiful Console Output
 - **Auto-detect terminal capabilities** - iOS/Android safe, no ANSI garbage
 - **Modern formatting** with colors and structured layout
 - **Rich context display** with metadata and stack traces
-- **Timestamp precision** with millisecond accuracy
 - **Dynamic project banners** - Your app name in ASCII art
 
-### 🔌 **Enterprise-Ready Integrations**
+### Enterprise-Ready Integrations
 - **Firebase Analytics & Crashlytics** - Complete Firebase suite support
 - **Sentry** - Full error tracking integration
 - **Datadog** - APM and log management
 - **New Relic** - Application monitoring
 - **Custom strategies** - Extend with your own logging destinations
 
-### 🔄 **Drop-in Replacement**
-100% compatible with popular logger packages - no code changes required!
-
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -80,7 +81,7 @@ Add Strategic Logger to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  strategic_logger: ^2.0.0
+  strategic_logger: ^3.0.0
 ```
 
 Then run:
@@ -88,36 +89,53 @@ Then run:
 flutter pub get
 ```
 
-### Basic Usage
+### Zero-Config Usage (NEW in v3.0.0)
+
+```dart
+import 'package:strategic_logger/logger.dart';
+
+void main() {
+  // Just use it! No initialization needed.
+  // Auto-initializes with ConsoleLogStrategy at debug level.
+  logger.info('App started');
+  logger.debug('Debug details', context: {'version': '3.0.0'});
+  logger.error('Something failed', stackTrace: StackTrace.current);
+}
+```
+
+### Full Configuration (Recommended for Production)
 
 ```dart
 import 'package:strategic_logger/logger.dart';
 
 void main() async {
-  // Initialize once at app startup
+  // Initialize with your preferred strategies
   await logger.initialize(
     projectName: 'My App',  // Your project name appears in the banner!
-    level: LogLevel.debug,
+    level: LogLevel.info,
     strategies: [
       ConsoleLogStrategy(
         useModernFormatting: true,
         useColors: true,
       ),
-      // Traditional strategies
       FirebaseAnalyticsLogStrategy(),
       FirebaseCrashlyticsLogStrategy(),
+      DatadogLogStrategy(
+        apiKey: 'your-datadog-api-key',
+        service: 'my-app',
+        env: 'production',
+      ),
     ],
-    useIsolates: true,
     enablePerformanceMonitoring: true,
   );
 
-  // Start logging!
-  await logger.info('App started successfully');
-  await logger.error('Something went wrong', stackTrace: StackTrace.current);
+  // All logging methods are synchronous - no await needed!
+  logger.info('App started successfully');
+  logger.error('Something went wrong', stackTrace: StackTrace.current);
 }
 ```
 
-When initialized, you'll see a beautiful colored banner with your project name:
+When initialized with a `projectName`, you'll see a beautiful colored banner:
 
 ```
            __ ___ ___
@@ -127,21 +145,11 @@ When initialized, you'll see a beautiful colored banner with your project name:
   Strategic Logger powered by Hypn Tech (hypn.com.br)
 ```
 
-If you don't provide a `projectName`, it defaults to showing "STRATEGIC LOGGER":
-
-```
- __ ______  __ ______  __ ___  __        __  __  __ ___ ___
-[__  | |__/|__| | |__ | _  |  |    |   |  || _ | _ |__ |__/
-___] | |  \|  | | |___|__]_|_ |__  |___|__||__]|__]|___|  \
-
-  Strategic Logger powered by Hypn Tech (hypn.com.br)
-```
-
 ---
 
-## 🎯 Features
+## Features
 
-### 🔌 **Logging Strategies**
+### Logging Strategies
 - **ConsoleLogStrategy** - Beautiful console output with ANSI color auto-detection
 - **FirebaseAnalyticsLogStrategy** - Track events in Firebase Analytics
 - **FirebaseCrashlyticsLogStrategy** - Report crashes and errors to Firebase Crashlytics
@@ -150,32 +158,32 @@ ___] | |  \|  | | |___|__]_|_ |__  |___|__||__]|__]|___|  \
 - **NewRelicLogStrategy** - Application monitoring with retry logic
 - **Custom Strategies** - Extend `LogStrategy` for your own destinations
 
-### 🔧 **Core Features**
+### Core Features
+- **Auto-initialization** - Works out of the box with ConsoleLogStrategy
+- **Synchronous API** - All logging methods return `void`, no `await` needed
 - **Log Levels** - Debug, Info, Warning, Error, Fatal with intelligent routing
 - **Structured Logging** - Rich metadata and context support
 - **Event System** - Custom log events with parameters
 - **Context Propagation** - Automatic context merging from entries and events
-- **Error Handling** - Robust error management with predefined types
 - **Strategy Filtering** - Filter logs by level and event type per strategy
 
-### 🚀 **Performance Features**
+### Performance Features
 - **Isolate Processing** - Heavy operations run in background isolates
 - **Performance Monitoring** - Built-in metrics and performance tracking
 - **Async Queue** - Efficient log processing with backpressure control (1000 entry buffer)
 - **Batch Processing** - Automatic batching for HTTP strategies (100 entries or 5s timeout)
 - **Retry Logic** - Exponential backoff for failed network operations (3 retries max)
 
-### 🎨 **Developer Experience**
+### Developer Experience
 - **Modern Console** - Beautiful, colorful output with automatic terminal detection
 - **Dynamic Banners** - Your project name displayed in ASCII art
-- **Compatibility Layer** - Drop-in replacement for popular logger packages
 - **Type Safety** - Full type safety in Dart with comprehensive documentation
 - **Hot Reload** - Seamless development experience with Flutter
 - **Platform Support** - Android, iOS, Linux, macOS, Web, Windows
 
 ---
 
-## 📊 Strategy Configuration
+## Strategy Configuration
 
 ### ConsoleLogStrategy - Beautiful Terminal Output
 
@@ -195,9 +203,9 @@ await logger.initialize(
 ```
 
 **Auto-detection ensures:**
-- ✅ No ANSI garbage (`\^[[36m`) on iOS Simulator/Android Logcat
-- ✅ Beautiful colors on macOS/Linux terminals
-- ✅ Windows Terminal support (WT_SESSION, TERM, COLORTERM detection)
+- No ANSI garbage on iOS Simulator/Android Logcat
+- Beautiful colors on macOS/Linux terminals
+- Windows Terminal support (WT_SESSION, TERM, COLORTERM detection)
 
 ### Firebase Strategies - Analytics & Crashlytics
 
@@ -214,8 +222,8 @@ await logger.initialize(
 );
 
 // Logs automatically tracked in Firebase
-await logger.info('User logged in', context: {'userId': '123'});
-await logger.error('Payment failed', stackTrace: StackTrace.current);
+logger.info('User logged in', context: {'userId': '123'});
+logger.error('Payment failed', stackTrace: StackTrace.current);
 ```
 
 ### Sentry - Error Tracking
@@ -230,7 +238,7 @@ await logger.initialize(
 );
 
 // Errors sent to Sentry with full context
-await logger.error(
+logger.error(
   'API request failed',
   context: {'endpoint': '/api/users', 'statusCode': 500},
   stackTrace: StackTrace.current,
@@ -276,37 +284,28 @@ await logger.initialize(
 
 ---
 
-## 📖 Usage Examples
+## Usage Examples
 
-### 🚀 Basic Logging
+### Basic Logging
 
 ```dart
 import 'package:strategic_logger/logger.dart';
 
-// Initialize logger
-await logger.initialize(
-  strategies: [
-    ConsoleLogStrategy(
-      useModernFormatting: true,
-      useColors: true,
-          ),
-  ],
-  enablePerformanceMonitoring: true,
-);
-
-// Basic logging
-await logger.debug('Debug message');
-await logger.info('Info message');
-await logger.warning('Warning message');
-await logger.error('Error message');
-await logger.fatal('Fatal error');
+void main() {
+  // Works immediately - auto-initializes on first call!
+  logger.debug('Debug message');
+  logger.info('Info message');
+  logger.warning('Warning message');
+  logger.error('Error message');
+  logger.fatal('Fatal error');
+}
 ```
 
-### 🎯 Structured Logging with Context
+### Structured Logging with Context
 
 ```dart
-// Rich context logging - context is now passed to ALL strategies
-await logger.info('User action', context: {
+// Rich context logging - context is passed to ALL strategies
+logger.info('User action', context: {
   'userId': '123',
   'action': 'login',
   'timestamp': DateTime.now().toIso8601String(),
@@ -321,10 +320,9 @@ await logger.info('User action', context: {
 
 // Error with stack trace and context
 try {
-  // Some risky operation
   throw Exception('Something went wrong');
 } catch (e, stackTrace) {
-  await logger.error(
+  logger.error(
     'Operation failed',
     stackTrace: stackTrace,
     context: {
@@ -334,19 +332,16 @@ try {
     },
   );
 }
-
-// Datadog will receive context fields directly in the log entry
-// You can filter and search by these fields in Datadog
 ```
 
-### 🔥 Multi-Strategy Logging
+### Multi-Strategy Logging
 
 ```dart
 // Log to multiple destinations simultaneously
 await logger.initialize(
   strategies: [
     ConsoleLogStrategy(useModernFormatting: true),
-    SentryLogStrategy(dsn: 'your-sentry-dsn'),
+    SentryLogStrategy(),
     FirebaseCrashlyticsLogStrategy(),
     FirebaseAnalyticsLogStrategy(),
     DatadogLogStrategy(
@@ -362,7 +357,7 @@ await logger.initialize(
 );
 
 // One call, multiple destinations
-await logger.error('Critical system failure', context: {
+logger.error('Critical system failure', context: {
   'component': 'payment_service',
   'severity': 'critical',
 });
@@ -375,47 +370,44 @@ await logger.error('Critical system failure', context: {
 // - New Relic (monitoring)
 ```
 
-### 🔄 Real-time Log Streaming
+### Real-time Log Streaming
 
 ```dart
 // Listen to real-time log events
 logger.logStream.listen((logEntry) {
   print('New log: ${logEntry.level} - ${logEntry.message}');
-  
+
   // Update UI, send to external systems, etc.
   updateDashboard(logEntry);
 });
 
 // Logs will automatically appear in the stream
-await logger.info('User performed action');
+logger.info('User performed action');
 ```
 
-### 📱 Flutter App Integration
+### Flutter App Integration
 
 ```dart
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
+import 'package:flutter/material.dart';
+import 'package:strategic_logger/logger.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await logger.initialize(
+    projectName: 'My App',
+    strategies: [
+      ConsoleLogStrategy(useModernFormatting: true),
+      FirebaseCrashlyticsLogStrategy(),
+    ],
+    enablePerformanceMonitoring: true,
+  );
+
+  runApp(const MyApp());
 }
 
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    _initializeLogger();
-  }
-
-  Future<void> _initializeLogger() async {
-    await logger.initialize(
-      strategies: [
-        ConsoleLogStrategy(useModernFormatting: true),
-        FirebaseCrashlyticsLogStrategy(),
-      ],
-      enablePerformanceMonitoring: true,
-    );
-    
-    logger.info('App initialized successfully');
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -423,13 +415,13 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         body: Center(
           child: ElevatedButton(
-            onPressed: () async {
-              await logger.info('Button pressed', context: {
+            onPressed: () {
+              logger.info('Button pressed', context: {
                 'screen': 'home',
                 'timestamp': DateTime.now().toIso8601String(),
               });
             },
-            child: Text('Log Action'),
+            child: const Text('Log Action'),
           ),
         ),
       ),
@@ -438,219 +430,109 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-### 🔧 Advanced Configuration
+### Strategy-Specific Events
 
 ```dart
-// Custom configuration with all features
-await logger.initialize(
-  strategies: [
-    ConsoleLogStrategy(
-      useModernFormatting: true,
-      useColors: true,
-            showTimestamp: true,
-      showContext: true,
-    ),
-    SentryLogStrategy(
-      dsn: 'your-sentry-dsn',
-      environment: 'production',
-    ),
-    DatadogLogStrategy(
-      apiKey: 'your-datadog-api-key',
-      site: 'datadoghq.com',
-      service: 'my-flutter-app',
-    ),
-  ],
-  level: LogLevel.info,
-  useIsolates: true, // Enable isolate-based processing
-  enablePerformanceMonitoring: true,
-  enableModernConsole: true,
+// Send a generic event to all strategies
+logger.log(
+  'purchase completed',
+  event: LogEvent(
+    eventName: 'PURCHASE_COMPLETED',
+    parameters: {'amount': '99.99', 'currency': 'USD'},
+  ),
 );
 
-// Performance monitoring
-final stats = logger.getPerformanceStats();
-print('Logs processed: ${stats['totalLogs']}');
-print('Average processing time: ${stats['avgProcessingTime']}ms');
+// Send to a specific strategy using specialized events
+logger.log(
+  'purchase completed',
+  event: FirebaseAnalyticsLogEvent(
+    eventName: 'PURCHASE_COMPLETED',
+    parameters: {'amount': '99.99'},
+  ),
+);
 
-// Force flush all queued logs
-await logger.flush();
-```
-
-### 🔄 Drop-in Replacement (Compatibility)
-
-```dart
-// 100% compatible with popular logger packages
-logger.debugSync('Debug message');
-logger.infoSync('Info message');
-logger.errorSync('Error message');
-
-// Or use the compatibility extension
-loggerCompatibility.debug('Debug message');
-loggerCompatibility.info('Info message');
-loggerCompatibility.error('Error message');
+logger.error(
+  'non-fatal error',
+  event: FirebaseCrashlyticsLogEvent(
+    eventName: 'ERROR',
+    parameters: {'component': 'checkout'},
+  ),
+);
 ```
 
 ---
 
-## 🎨 Modern Console Output
+## Modern Console Output
 
 Experience beautiful, structured console output:
 
 ```
-🐛 14:30:25.123 DEBUG  User action completed
-📋 Event: USER_ACTION
+14:30:25.123 DEBUG  User action completed
+ Event: USER_ACTION
    Message: User completed purchase
    Parameters:
      userId: 123
      amount: 99.99
-🔍 Context:
+ Context:
    timestamp: 2024-01-15T14:30:25.123Z
    source: mobile_app
 ```
 
 ---
 
-## 🔧 Configuration
+## Custom Strategies
 
-### Advanced Initialization
-
-```dart
-await logger.initialize(
-  level: LogLevel.info,
-  strategies: [
-    // Console with modern formatting
-    ConsoleLogStrategy(
-      useModernFormatting: true,
-      useColors: true,
-            showTimestamp: true,
-      showContext: true,
-    ),
-    
-    // Firebase Analytics
-    FirebaseAnalyticsLogStrategy(),
-    
-    // Firebase Crashlytics
-    FirebaseCrashlyticsLogStrategy(),
-    
-    // Datadog (v2 API with compression)
-    DatadogLogStrategy(
-      apiKey: 'your-datadog-api-key',
-      service: 'my-app',
-      env: 'production',
-      tags: 'team:mobile,version:1.0.0',
-      enableCompression: true, // Default: true, reduces network overhead
-      // Uses v2 endpoint: https://http-intake.logs.datadoghq.com/api/v2/logs
-    ),
-    
-    // New Relic
-    NewRelicLogStrategy(
-      licenseKey: 'your-newrelic-license-key',
-      appName: 'my-app',
-      environment: 'production',
-    ),
-  ],
-  
-  // Modern features
-  useIsolates: true,
-  enablePerformanceMonitoring: true,
-  enableModernConsole: true,
-);
-```
-
-### Custom Strategies
-
-You can create custom strategies in two ways:
-
-#### Option 1: New Way (Recommended for new code)
+Create custom strategies by extending `LogStrategy`:
 
 ```dart
+import 'package:strategic_logger/logger.dart';
 import 'package:strategic_logger/src/core/log_queue.dart';
 
 class MyCustomLogStrategy extends LogStrategy {
   @override
-  Future<void> log(LogEntry entry) async {
-    // Access all log information from the entry
-    final message = entry.message;
-    final level = entry.level;
-    final timestamp = entry.timestamp;
-    final context = entry.context; // Context is available!
-    final event = entry.event;
-    
-    // Your implementation
-    await _sendToCustomService({
-      'message': message.toString(),
-      'level': level.name,
-      'timestamp': timestamp.toIso8601String(),
+  Future<void> log(LogEntry entry) async => _processEntry(entry);
+
+  @override
+  Future<void> info(LogEntry entry) async => _processEntry(entry);
+
+  @override
+  Future<void> error(LogEntry entry) async => _processEntry(entry);
+
+  @override
+  Future<void> fatal(LogEntry entry) async => _processEntry(entry);
+
+  Future<void> _processEntry(LogEntry entry) async {
+    if (!shouldLog(event: entry.event)) return;
+
+    // Merge context from entry and event parameters
+    final context = <String, dynamic>{};
+    if (entry.context != null) context.addAll(entry.context!);
+    if (entry.event?.parameters != null) {
+      context.addAll(entry.event!.parameters!);
+    }
+
+    // Your implementation here
+    await _sendToService({
+      'message': entry.message.toString(),
+      'level': entry.level.name,
+      'timestamp': entry.timestamp.toIso8601String(),
       'context': context,
-      'event': event?.toMap(),
     });
   }
-  
-  @override
-  Future<void> info(LogEntry entry) async {
-    await log(entry);
-  }
-  
-  @override
-  Future<void> error(LogEntry entry) async {
-    // Access error information including stackTrace and context
-    final error = entry.message;
-    final stackTrace = entry.stackTrace;
-    final context = entry.context; // Context is available!
-    
-    await log(entry);
-  }
-  
-  @override
-  Future<void> fatal(LogEntry entry) async {
-    await error(entry);
-  }
 }
 ```
 
-#### Option 2: Legacy Way (Still works! No changes needed!)
-
-```dart
-class MyLegacyStrategy extends LogStrategy {
-  @override
-  Future<void> logMessage(
-    dynamic message,
-    LogEvent? event,
-    Map<String, dynamic>? context,  // Context is now available automatically! 🎉
-  ) async {
-    // Your old implementation - still works!
-    print('Message: $message');
-    if (context != null) {
-      print('Context: $context');  // Context works without any changes!
-    }
-  }
-  
-  @override
-  Future<void> logError(
-    dynamic error,
-    StackTrace? stackTrace,
-    LogEvent? event,
-    Map<String, dynamic>? context,  // Context is now available automatically! 🎉
-  ) async {
-    // Your old implementation - still works!
-    print('Error: $error');
-    if (context != null) {
-      print('Context: $context');  // Context works without any changes!
-    }
-  }
-}
-```
-
-**Note**: The `LogEntry` object contains:
+**The `LogEntry` object contains:**
 - `message` - The log message
 - `level` - The log level (debug, info, warning, error, fatal)
 - `timestamp` - When the log was created
-- `context` - Structured context map (Map<String, dynamic>?)
-- `stackTrace` - Stack trace for errors (StackTrace?)
-- `event` - Optional LogEvent object
+- `context` - Structured context map (`Map<String, dynamic>?`)
+- `stackTrace` - Stack trace for errors (`StackTrace?`)
+- `event` - Optional `LogEvent` object
 
 ---
 
-## 📊 Performance
+## Performance
 
 Strategic Logger is designed for high performance:
 
@@ -658,7 +540,7 @@ Strategic Logger is designed for high performance:
 - **Automatic batching** reduces network overhead
 - **Async queue with backpressure** handles high log volumes
 - **Performance monitoring** tracks operation metrics
-- **Efficient serialization** minimizes memory usage
+- **Synchronous fire-and-forget API** - logging calls return immediately
 
 ### Performance Metrics
 
@@ -671,100 +553,71 @@ print('Error rate: ${stats['processLogEntry']?.errorRate}%');
 
 ---
 
-## ✅ Backward Compatible - No Breaking Changes!
+## Migration Guide
 
-**✅ Zero Breaking Changes**: Old custom strategies continue to work without modification!
-**✅ Context Now Available**: Even legacy strategies automatically receive context.
-**✅ All built-in strategies updated**: Using new interface for better context support.
-**✅ Public API unchanged**: `logger.log()`, `logger.info()`, etc. work the same way.
+### From v2.x to v3.0.0
 
-**Legacy strategies** can continue using `logMessage()` and `logError()` - they now receive context automatically!
-**New strategies** should use `log(LogEntry)`, `info(LogEntry)`, etc. for better type safety.
+v3.0.0 is a **major release** with breaking changes that simplify the API:
 
-## 🆕 Migration Guide
-
-### From v0.1.x to v0.2.x
-
-The new version introduces breaking changes for better performance and modern features:
+#### 1. Remove `await` from logging calls
 
 ```dart
-// Old way (v0.1.x)
-logger.initialize(
-  level: LogLevel.info,
-  strategies: [ConsoleLogStrategy()],
-);
+// v2.x (old)
+await logger.info('message');
+await logger.error('error', stackTrace: StackTrace.current);
 
-// New way (v0.2.x)
-await logger.initialize(
-  level: LogLevel.info,
-  strategies: [
-    ConsoleLogStrategy(
-      useModernFormatting: true,
-      useColors: true,
-          ),
-  ],
-  useIsolates: true,
-  enablePerformanceMonitoring: true,
-  enableModernConsole: true,
-);
+// v3.0.0 (new) - all logging methods are now void
+logger.info('message');
+logger.error('error', stackTrace: StackTrace.current);
 ```
 
----
+> **Note**: In Dart, calling `await` on a `void` expression is a compilation error. You must remove `await` from all logging calls.
 
-## 🌐 Supported Platforms
+#### 2. Auto-initialization (optional)
 
-- ✅ **Flutter** (iOS, Android, Web, Desktop)
-- ✅ **Dart CLI** applications
-- ✅ **Dart VM** applications
-- ✅ **Flutter Web**
-- ✅ **Flutter Desktop** (Windows, macOS, Linux)
+```dart
+// v2.x (old) - required initialization, crashed with NotInitializedError otherwise
+await logger.initialize(strategies: [ConsoleLogStrategy()]);
+logger.info('message');
 
----
+// v3.0.0 (new) - works immediately, auto-initializes with ConsoleLogStrategy
+logger.info('message');  // Just works!
 
-## 🎯 Use Cases & Applications
+// Explicit initialization is still recommended for production
+await logger.initialize(strategies: [ConsoleLogStrategy(), SentryLogStrategy()]);
+```
 
-### 🏢 **Enterprise Applications**
-- **Microservices Architecture** - Centralized logging across distributed systems
-- **High-Traffic Applications** - Handle millions of logs with isolate-based processing
-- **Real-time Monitoring** - Multi-strategy logging to Datadog, New Relic, Sentry
-- **Compliance & Auditing** - Structured logging for regulatory requirements
+#### 3. Removed APIs
 
-### 📱 **Mobile & Flutter Applications**
-- **Cross-Platform Logging** - Consistent logging across iOS, Android, Web, Desktop
-- **Performance Optimization** - Isolate-based processing for smooth UI
-- **Crash Analytics** - Integration with Firebase Crashlytics and Sentry
-- **User Behavior Tracking** - Structured logging for analytics
+The following have been removed in v3.0.0:
 
-### ☁️ **Cloud & DevOps**
-- **Multi-Cloud Support** - Datadog, New Relic, AWS CloudWatch integration
-- **Container Logging** - Optimized for Docker and Kubernetes environments
-- **Serverless Functions** - Efficient logging for Lambda and Cloud Functions
-- **CI/CD Integration** - Automated testing and deployment logging
-
----
-
-## 🗺️ Roadmap
-
-### ✅ **v2.0.0 - Simplification Release (Released)**
-- [x] **Code Cleanup** - Removed unused ObjectPool and LogCompression
-- [x] **Dynamic Banner** - Project name displayed in colored ASCII art
-- [x] **Context Propagation** - `mergedContext` getter for unified context access
-- [x] **Simplified API** - Cleaner strategy interface
-
-### 🔧 **v2.1.0 - Developer Experience (Q2 2025)**
-- [ ] **HTTP Strategy Base Class** - Extract common patterns from Datadog/NewRelic
-- [ ] **Better Error Messages** - Improved initialization error handling
-- [ ] **Performance Improvements** - Reduce isolate overhead for simple operations
-
-### 🚀 **v3.0.0 - Cloud Native & Ecosystem (Q3 2025)**
-- [ ] **Grafana Integration** - Custom dashboards and intelligent alerts
-- [ ] **Prometheus Integration** - Detailed metrics and Kubernetes integration
-- [ ] **Developer Tools** - VS Code extension and CLI tools
-- [ ] **OpenTelemetry** - Distributed tracing support
+| Removed | Replacement |
+|---------|-------------|
+| `logger.infoSync()` | `logger.info()` (already synchronous) |
+| `logger.debugSync()` | `logger.debug()` |
+| `logger.errorSync()` | `logger.error()` |
+| `logger.warningSync()` | `logger.warning()` |
+| `logger.fatalSync()` | `logger.fatal()` |
+| `logger.verboseSync()` | `logger.verbose()` |
+| `logger.logSync()` | `logger.log()` |
+| `loggerCompatibility` | `logger` (use directly) |
+| `NotInitializedError` | Auto-initialization (no longer thrown) |
+| MCP module | Removed (scope creep) |
+| AI module | Removed (scope creep) |
 
 ---
 
-## 🤝 Contributing
+## Supported Platforms
+
+- **Flutter** (iOS, Android, Web, Desktop)
+- **Dart CLI** applications
+- **Dart VM** applications
+- **Flutter Web**
+- **Flutter Desktop** (Windows, macOS, Linux)
+
+---
+
+## Contributing
 
 We welcome contributions! Please see our [Code of Conduct](CODE_OF_CONDUCT.md) for community guidelines.
 
@@ -778,19 +631,18 @@ We welcome contributions! Please see our [Code of Conduct](CODE_OF_CONDUCT.md) f
 
 ---
 
-## 💖 Support
+## Support
 
 If you find Strategic Logger helpful, please consider:
 
-- ⭐ **Starring** the repository
-- 🐛 **Reporting** bugs
-- 💡 **Suggesting** new features
-- 🤝 **Contributing** code
-- ☕ [Buy me a coffee](https://www.buymeacoffee.com/sauloroncon)
+- Starring the repository
+- Reporting bugs
+- Suggesting new features
+- Contributing code
 
 ---
 
-## 🏢 Sponsored by
+## Sponsored by
 
 <div align="center">
 
@@ -802,27 +654,18 @@ If you find Strategic Logger helpful, please consider:
 
 ---
 
-## 📄 License
+## License
 
 Strategic Logger is released under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 📚 Documentation & Resources
+## Documentation & Resources
 
-### 📖 **Official Documentation**
 - [API Documentation](https://pub.dev/documentation/strategic_logger/latest/) - Complete API reference
 - [Examples](example/) - Ready-to-use code examples
 - [Changelog](CHANGELOG.md) - Version history and updates
 - [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
-
-### 🎓 **Learning Resources**
-- [API Documentation](https://pub.dev/documentation/strategic_logger/latest/) - Complete API reference
-- [Examples](example/) - Ready-to-use code examples
-- [Changelog](CHANGELOG.md) - Version history and updates
-- [Contributing Guide](CODE_OF_CONDUCT.md) - Code of conduct
-
-### 🌟 **Community**
 - [GitHub Issues](https://github.com/Hypn-Tech/strategic_logger/issues) - Report bugs and request features
 - [GitHub Repository](https://github.com/Hypn-Tech/strategic_logger) - Source code and contributions
 
@@ -830,12 +673,9 @@ Strategic Logger is released under the **MIT License**. See [LICENSE](LICENSE) f
 
 <div align="center">
 
-**Made with ❤️ by the Strategic Logger team**
+**Made with care by the Strategic Logger team**
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Hypn-Tech/strategic_logger)
 [![Pub](https://img.shields.io/badge/Pub-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://pub.dev/packages/strategic_logger)
-
----
-
 
 </div>

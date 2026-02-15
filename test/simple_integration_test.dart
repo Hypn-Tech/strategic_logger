@@ -35,11 +35,11 @@ void main() {
         );
 
         // Test logging with different levels
-        await logger.debug('Debug message for integration test');
-        await logger.info('Info message for integration test');
-        await logger.warning('Warning message for integration test');
-        await logger.error('Error message for integration test');
-        await logger.fatal('Fatal message for integration test');
+        logger.debug('Debug message for integration test');
+        logger.info('Info message for integration test');
+        logger.warning('Warning message for integration test');
+        logger.error('Error message for integration test');
+        logger.fatal('Fatal message for integration test');
 
         // Verify all strategies received the logs
         final stats = logger.getPerformanceStats();
@@ -62,7 +62,7 @@ void main() {
 
         // Log messages that might cause strategy failures
         for (int i = 0; i < 10; i++) {
-          await logger.info(
+          logger.info(
             'Integration test message $i',
             context: <String, Object>{
               'iteration': i,
@@ -92,7 +92,7 @@ void main() {
         for (int i = 0; i < 50; i++) {
           futures.add(
             Future(() async {
-              await logger.info(
+              logger.info(
                 'Isolate integration test $i',
                 context: <String, Object>{
                   'iteration': i,
@@ -125,7 +125,7 @@ void main() {
 
         // Generate logs that might overwhelm isolates
         for (int i = 0; i < 100; i++) {
-          await logger.info(
+          logger.info(
             'Isolate fallback test $i',
             context: <String, Object>{
               'iteration': i,
@@ -156,7 +156,7 @@ void main() {
 
           // Perform various operations
           for (int i = 0; i < 100; i++) {
-            await logger.info(
+            logger.info(
               'Performance monitoring test $i',
               context: <String, Object>{'iteration': i, 'performance': 'test'},
             );
@@ -183,7 +183,7 @@ void main() {
 
         // Generate logs with varying memory usage
         for (int i = 0; i < 50; i++) {
-          await logger.info(
+          logger.info(
             'Memory tracking test $i',
             context: <String, Object>{
               'iteration': i,
@@ -252,7 +252,7 @@ void main() {
             },
           };
 
-          await logger.info('Complex context test $i', context: complexContext);
+          logger.info('Complex context test $i', context: complexContext);
         }
 
         final stats = logger.getPerformanceStats();
@@ -282,7 +282,7 @@ void main() {
             'dateValue': DateTime.now(),
           };
 
-          await logger.info('Mixed context test $i', context: mixedContext);
+          logger.info('Mixed context test $i', context: mixedContext);
         }
 
         final stats = logger.getPerformanceStats();
@@ -304,7 +304,7 @@ void main() {
         // Test with potentially problematic data
         for (int i = 0; i < 15; i++) {
           try {
-            await logger.info(
+            logger.info(
               'Error handling test $i',
               context: <String, Object>{
                 'iteration': i,
@@ -338,7 +338,7 @@ void main() {
           futures.add(
             Future(() async {
               try {
-                await logger.info(
+                logger.info(
                   'Concurrent error test $i',
                   context: <String, Object>{
                     'iteration': i,
@@ -402,7 +402,7 @@ void main() {
 
           // Test logging with this configuration
           for (int i = 0; i < 10; i++) {
-            await logger.info(
+            logger.info(
               'Config test $configIndex-$i',
               context: <String, Object>{
                 'configIndex': configIndex,
@@ -428,7 +428,7 @@ void main() {
 
         // Log some messages
         for (int i = 0; i < 5; i++) {
-          await logger.info('Initial config test $i');
+          logger.info('Initial config test $i');
         }
 
         // Reconfigure
@@ -441,7 +441,7 @@ void main() {
 
         // Log more messages
         for (int i = 0; i < 5; i++) {
-          await logger.info('Reconfigured test $i');
+          logger.info('Reconfigured test $i');
         }
 
         final stats = logger.getPerformanceStats();
@@ -467,24 +467,24 @@ void main() {
               // Log with different levels
               switch (i % 5) {
                 case 0:
-                  await logger.debug('E2E debug test $i');
+                  logger.debug('E2E debug test $i');
                   break;
                 case 1:
-                  await logger.info('E2E info test $i');
+                  logger.info('E2E info test $i');
                   break;
                 case 2:
-                  await logger.warning('E2E warning test $i');
+                  logger.warning('E2E warning test $i');
                   break;
                 case 3:
-                  await logger.error('E2E error test $i');
+                  logger.error('E2E error test $i');
                   break;
                 case 4:
-                  await logger.fatal('E2E fatal test $i');
+                  logger.fatal('E2E fatal test $i');
                   break;
               }
 
               // Log with context
-              await logger.info(
+              logger.info(
                 'E2E context test $i',
                 context: <String, Object>{
                   'iteration': i,
@@ -527,7 +527,7 @@ void main() {
         for (int i = 0; i < 500; i++) {
           futures.add(
             Future(() async {
-              await logger.info(
+              logger.info(
                 'Stress test $i',
                 context: <String, Object>{
                   'iteration': i,

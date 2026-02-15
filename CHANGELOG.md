@@ -1,3 +1,52 @@
+# 3.0.0
+
+## Auto-Init & Synchronous API - Strategic Logger 3.0.0
+
+### Breaking Changes
+
+- **Logging methods now return `void` instead of `Future<void>`**
+  - `log()`, `info()`, `error()`, `fatal()`, `debug()`, `warning()`, `verbose()`, `logStructured()` all return `void`
+  - **Backward compatible**: existing code with `await logger.info('msg')` still compiles (Dart allows `await` on `void`)
+  - No more `async` overhead on logging calls - fire-and-forget via internal queue
+
+### New Features
+
+- **Auto-initialization** - Logger works out-of-the-box without calling `initialize()` first
+  - Calling `logger.info('msg')` before `initialize()` no longer throws `NotInitializedError`
+  - Auto-initializes with `ConsoleLogStrategy` at `LogLevel.debug`
+  - Prints a one-time warning suggesting explicit initialization
+  - Calling `initialize()` after auto-init seamlessly replaces the auto-configuration
+- **`isAutoInitialized` getter** - Check if logger was auto-initialized vs explicitly configured
+
+### Removed
+
+- **`*Sync` methods** (`debugSync`, `infoSync`, `warningSync`, `errorSync`, `fatalSync`, `verboseSync`, `logSync`)
+  - All primary methods are now synchronous, making `*Sync` variants redundant
+- **`StrategicLoggerSyncCompatibility` extension** - Shadowed by class methods, was redundant
+- **`StrategicLoggerCompatibilityWrapper` class** - Use `logger` directly
+- **`loggerCompatibility` global** - Use `logger` directly
+- **`LoggerCompatibility` abstract class** - Unused compatibility interface
+- **MCP module** (`MCPLogStrategy`, `MCPServer`) - Scope creep, not a logging concern
+- **AI module** (`AILogStrategy`) - Scope creep, not a logging concern
+- **`NotInitializedError`** - No longer thrown (auto-init prevents it)
+
+### Migration Guide
+
+```dart
+// Before (v2.x)
+await logger.initialize(strategies: [ConsoleLogStrategy()], level: LogLevel.debug);
+await logger.info('Hello');  // Required await + initialize
+
+// After (v3.0.0)
+logger.info('Hello');  // Works immediately, no await, no initialize needed
+
+// For full configuration (optional):
+await logger.initialize(strategies: [ConsoleLogStrategy(), SentryLogStrategy()], level: LogLevel.info);
+logger.info('Now using multiple strategies');  // No await needed
+```
+
+---
+
 # 2.1.0
 
 ## ⚡ Per-Strategy Isolate Configuration - Strategic Logger 2.1.0

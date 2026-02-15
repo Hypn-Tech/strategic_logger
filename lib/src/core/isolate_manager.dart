@@ -262,7 +262,7 @@ class IsolateManager {
   /// Prepares a batch for HTTP transmission (JSON + optional compression).
   ///
   /// Used by HTTP strategies like Datadog and NewRelic.
-  /// Returns a map with 'body' (List<int>), 'isCompressed' (bool), and size info.
+  /// Returns a map with 'body' (`List<int>`), 'isCompressed' (bool), and size info.
   Future<Map<String, dynamic>> prepareBatch({
     required List<Map<String, dynamic>> batch,
     bool compress = false,

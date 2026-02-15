@@ -29,7 +29,7 @@ void main() {
 
         // Generate 1000 logs
         for (int i = 0; i < 1000; i++) {
-          await logger.info(
+          logger.info(
             'Performance test log $i',
             context: <String, Object>{
               'iteration': i,
@@ -80,7 +80,7 @@ void main() {
           futures.add(
             Future(() async {
               for (int i = 0; i < 100; i++) {
-                await logger.info(
+                logger.info(
                   'Concurrent log from stream $stream, iteration $i',
                   context: <String, Object>{'stream': stream, 'iteration': i},
                 );
@@ -135,7 +135,7 @@ void main() {
             },
           };
 
-          await logger.info(
+          logger.info(
             'Memory pressure test log $i',
             context: largeContext,
           );
@@ -180,7 +180,7 @@ void main() {
         final isolateStopwatch = Stopwatch()..start();
 
         for (int i = 0; i < 500; i++) {
-          await logger.info(
+          logger.info(
             'Isolate test log $i',
             context: <String, Object>{
               'iteration': i,
@@ -206,7 +206,7 @@ void main() {
         final noIsolateStopwatch = Stopwatch()..start();
 
         for (int i = 0; i < 500; i++) {
-          await noIsolateLogger.info(
+          noIsolateLogger.info(
             'No isolate test log $i',
             context: <String, Object>{
               'iteration': i,
@@ -250,7 +250,7 @@ void main() {
           futures.add(
             Future(() async {
               for (int j = 0; j < 10; j++) {
-                await logger.info(
+                logger.info(
                   'Heavy computation log $i-$j',
                   context: <String, Object>{
                     'batch': i,
@@ -302,7 +302,7 @@ void main() {
 
         // Generate logs with large context data
         for (int i = 0; i < 1000; i++) {
-          await logger.info(
+          logger.info(
             'Memory cleanup test log $i',
             context: <String, Object>{
               'iteration': i,
@@ -352,7 +352,7 @@ void main() {
           futures.add(
             Future(() async {
               for (int i = 0; i < 1000; i++) {
-                await logger.info(
+                logger.info(
                   'Extreme load test log batch $batch, iteration $i',
                   context: <String, Object>{
                     'batch': batch,
@@ -419,7 +419,7 @@ void main() {
             },
           };
 
-          await logger.info(
+          logger.info(
             'Memory stress test log $i',
             context: massiveContext,
           );
@@ -470,7 +470,7 @@ void main() {
           final stopwatch = Stopwatch()..start();
 
           for (int i = 0; i < 500; i++) {
-            await runLogger.info(
+            runLogger.info(
               'Regression test log run $run, iteration $i',
               context: <String, Object>{'run': run, 'iteration': i},
             );
@@ -530,31 +530,31 @@ void main() {
         for (int i = 0; i < 200; i++) {
           switch (i % 5) {
             case 0:
-              await logger.debug(
+              logger.debug(
                 'Debug log $i',
                 context: <String, Object>{'level': 'debug', 'iteration': i},
               );
               break;
             case 1:
-              await logger.info(
+              logger.info(
                 'Info log $i',
                 context: <String, Object>{'level': 'info', 'iteration': i},
               );
               break;
             case 2:
-              await logger.warning(
+              logger.warning(
                 'Warning log $i',
                 context: <String, Object>{'level': 'warning', 'iteration': i},
               );
               break;
             case 3:
-              await logger.error(
+              logger.error(
                 'Error log $i',
                 context: <String, Object>{'level': 'error', 'iteration': i},
               );
               break;
             case 4:
-              await logger.fatal(
+              logger.fatal(
                 'Fatal log $i',
                 context: <String, Object>{'level': 'fatal', 'iteration': i},
               );
@@ -634,7 +634,7 @@ void main() {
             },
           };
 
-          await logger.info(
+          logger.info(
             'Complex context test log $i',
             context: complexContext,
           );

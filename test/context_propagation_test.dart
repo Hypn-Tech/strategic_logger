@@ -163,8 +163,8 @@ void main() {
         force: true,
       );
 
-      // Log with context
-      await testLogger.log('Test message', context: {'testKey': 'testValue'});
+      // Log with context - no await needed in v3.0.0
+      testLogger.log('Test message', context: {'testKey': 'testValue'});
 
       // Context should be available in the log entry
       // (We can't easily verify strategy received it without mocking,
@@ -180,7 +180,7 @@ void main() {
         force: true,
       );
 
-      await testLogger.info('Info message', context: {'infoKey': 'infoValue'});
+      testLogger.info('Info message', context: {'infoKey': 'infoValue'});
 
       expect(testLogger.isInitialized, isTrue);
     });
@@ -194,7 +194,7 @@ void main() {
       );
 
       final stackTrace = StackTrace.current;
-      await testLogger.error(
+      testLogger.error(
         'Error message',
         stackTrace: stackTrace,
         context: {'errorKey': 'errorValue'},

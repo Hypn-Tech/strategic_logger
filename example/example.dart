@@ -1,17 +1,21 @@
 import 'package:strategic_logger/logger.dart';
 
-/// Example demonstrating Strategic Logger v2.0.0 features.
+/// Example demonstrating Strategic Logger v3.0.0 features.
 ///
 /// This example shows:
+/// - Auto-initialization (works without calling initialize()!)
+/// - Synchronous logging API (no await needed!)
 /// - Dynamic project name banner (displayed in colored ASCII art!)
 /// - Modern console formatting with colors
-/// - Isolate-based processing for heavy operations
-/// - Performance monitoring
 /// - Context propagation to all strategies
 /// - Multi-strategy logging (Console, Firebase, Datadog, NewRelic)
-/// - Compatibility with popular logger packages
 void main() async {
-  // Initialize the logger once with its strategies and log level.
+  // NEW in v3.0.0: Logger works immediately without initialize()!
+  // Auto-initializes with ConsoleLogStrategy at debug level.
+  logger.info('This works without initialize()!');
+  logger.debug('No await needed either.');
+
+  // For full configuration, call initialize() (optional but recommended for production)
   await logger.initialize(
     projectName: 'EXAMPLE APP', // Your project name in ASCII art!
     level: LogLevel
@@ -31,36 +35,31 @@ void main() async {
     enableModernConsole: true, // Enable modern console formatting
   );
 
-  // Demonstrate modern logging features
-  await logger.debug('Debug message with modern formatting');
-  await logger.info(
+  // All logging methods are now synchronous (void) - no await needed!
+  logger.debug('Debug message with modern formatting');
+  logger.info(
     'Info message with context',
     context: {'userId': '123', 'action': 'login'},
   );
-  await logger.warning(
+  logger.warning(
     'Warning message with event',
     event: LogEvent(eventName: 'WARNING_EVENT'),
   );
-  await logger.error(
+  logger.error(
     'Error message with stack trace',
     stackTrace: StackTrace.current,
   );
-  await logger.fatal('Fatal error message');
+  logger.fatal('Fatal error message');
 
-  // Demonstrate compatibility with popular logger packages
-  loggerCompatibility.debug('Debug message (compatibility mode)');
-  loggerCompatibility.info('Info message (compatibility mode)');
-  loggerCompatibility.error('Error message (compatibility mode)');
-
-  // Demonstrate structured logging
-  await logger.logStructured(
+  // Structured logging
+  logger.logStructured(
     LogLevel.info,
     'User action completed',
     data: {'userId': '123', 'action': 'purchase', 'amount': 99.99},
     tag: 'USER_ACTION',
   );
 
-  // Demonstrate performance monitoring
+  // Performance monitoring
   print('Performance Stats: ${logger.getPerformanceStats()}');
 
   // Reconfiguration of the logger after initialization is not recommended without a strong reason.
@@ -181,5 +180,5 @@ void main() async {
     ],
   );
 
-  print('✅ Example completed successfully!');
+  print('Example completed successfully!');
 }

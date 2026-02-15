@@ -174,8 +174,8 @@ void main() {
       // Wait a bit for initialization to complete
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // Log with context
-      await testLogger.log(
+      // Log with context - no await needed in v3.0.0
+      testLogger.log(
         'Test message',
         context: {'userId': 789, 'action': 'test'},
       );

@@ -8,8 +8,8 @@ import 'core/performance_monitor.dart';
 import 'enums/log_level.dart';
 
 import 'errors/alread_initialized_error.dart';
-import 'errors/not_initialized_error.dart';
 import 'events/log_event.dart';
+import 'strategies/console/console_log_strategy.dart';
 import 'strategies/log_strategy.dart';
 
 // Platform detection
@@ -21,29 +21,41 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 /// allowing for detailed logging control throughout an application. It ensures that only a single
 /// instance of the logger is initialized and used throughout the application lifecycle.
 ///
-/// The logger must be initialized before use, with the desired log level and strategies provided.
-/// After initialization, the logger can be reconfigured, but this should be used with caution to
-/// avoid unintended side effects during the application lifecycle.
+/// The logger works out-of-the-box without initialization. If used before `initialize()` is called,
+/// it auto-initializes with a [ConsoleLogStrategy] at debug level and prints a warning.
+/// Call `initialize()` for full configuration with multiple strategies.
+///
+/// All logging methods (`log`, `info`, `error`, `fatal`, `debug`, `warning`, `verbose`)
+/// are synchronous (return `void`) and use fire-and-forget via an internal queue.
 ///
 /// Features:
+/// - Auto-initialization with ConsoleLogStrategy (no crash on first use)
+/// - Synchronous logging API (no `await` required)
 /// - Isolate-based processing for heavy operations
 /// - Performance monitoring and metrics
 /// - Modern console formatting with colors and emojis
-/// - Compatibility with popular logger packages
 /// - Async queue with backpressure control
 ///
 /// Example:
 /// ```dart
+/// // Works immediately - auto-initializes with ConsoleLogStrategy
+/// logger.info('Application started.');
+///
+/// // For full configuration, call initialize()
 /// await logger.initialize(strategies: [ConsoleLogStrategy()], level: LogLevel.info);
-/// logger.log("Application started.");
+/// logger.info('Now using explicit configuration.');
 /// ```
 StrategicLogger logger = StrategicLogger();
 
 class StrategicLogger {
   bool _isInitialized = false;
+  bool _isAutoInitialized = false;
 
   /// Indicates whether the logger has been initialized.
   bool get isInitialized => _isInitialized;
+
+  /// Indicates whether the logger was auto-initialized (without explicit `initialize()` call).
+  bool get isAutoInitialized => _isAutoInitialized;
 
   /// Determines if isolates are supported on the current platform.
   ///
@@ -75,6 +87,52 @@ class StrategicLogger {
 
   /// Stream of log entries for real-time console updates
   Stream<LogEntry> get logStream => _logStreamController.stream;
+
+  /// Ensures the logger is initialized before use.
+  ///
+  /// If the logger has not been initialized, auto-initializes with a
+  /// [ConsoleLogStrategy] at debug level. Prints a one-time warning.
+  void _ensureInitialized() {
+    if (!_isInitialized) {
+      _autoInitialize();
+    }
+  }
+
+  /// Auto-initializes the logger with a ConsoleLogStrategy for immediate use.
+  ///
+  /// This is a synchronous initialization that skips isolates and performance
+  /// monitoring for simplicity. Prints a warning suggesting explicit initialization.
+  void _autoInitialize() {
+    // Recreate stream controller if closed
+    if (_logStreamController.isClosed) {
+      _logStreamController = StreamController<LogEntry>.broadcast();
+    }
+
+    // Minimal configuration - no isolates, no performance monitoring
+    _enablePerformanceMonitoring = false;
+    _enableModernConsole = true;
+    _useIsolates = false;
+
+    // Initialize log queue
+    _logQueue?.dispose();
+    _logQueue = LogQueue();
+    _setupLogQueueListener();
+
+    // Set up ConsoleLogStrategy with useIsolate: false
+    final consoleStrategy = ConsoleLogStrategy(useIsolate: false);
+    _initializeStrategies([consoleStrategy], LogLevel.debug);
+
+    // Mark as initialized
+    _isInitialized = true;
+    _isAutoInitialized = true;
+
+    // Print warning once
+    const warning =
+        '[Strategic Logger] Auto-initialized with ConsoleLogStrategy (debug level).\n'
+        '[Strategic Logger] Call logger.initialize(strategies: [...]) for full configuration.';
+    print(warning);
+    developer.log(warning, name: 'StrategicLogger');
+  }
 
   /// Reconfigures the logger even if it has been previously initialized.
   ///
@@ -108,6 +166,8 @@ class StrategicLogger {
   /// Configures the logger if it has not been initialized.
   ///
   /// This method should be used for the initial setup of the logger.
+  /// If the logger was auto-initialized (used before calling `initialize()`),
+  /// this will automatically replace the auto-configuration.
   ///
   /// [strategies] - List of strategies to use for logging.
   /// [level] - The minimum log level to log. Defaults to [LogLevel.none].
@@ -127,10 +187,13 @@ class StrategicLogger {
     // Auto-detect platform support for isolates
     final shouldUseIsolates = useIsolates ?? _isIsolateSupported();
 
+    // If auto-initialized, treat as force: true automatically
+    final shouldForce = force || _isAutoInitialized;
+
     await logger._initialize(
       strategies: strategies,
       level: level,
-      force: force,
+      force: shouldForce,
       useIsolates: shouldUseIsolates,
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
@@ -233,6 +296,8 @@ class StrategicLogger {
 
       // Set initialized BEFORE printing (which may use logger methods)
       _isInitialized = true;
+      // Always clear auto-init flag on explicit initialization
+      _isAutoInitialized = false;
 
       _printStrategicLoggerInit(isReconfiguration: isReconfiguration);
     }
@@ -317,19 +382,17 @@ class StrategicLogger {
 
   /// Logs a message or event using the configured strategies.
   ///
-  /// Throws [NotInitializedError] if the logger has not been initialized.
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
   /// [message] - The message to log.
   /// [event] - Optional. The specific log event associated with the message.
   /// [context] - Optional. Additional context data.
-  Future<void> log(
+  void log(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: message,
@@ -338,27 +401,22 @@ class StrategicLogger {
       context: context,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
-  /// Logs a message or event using the configured strategies.
+  /// Logs an info message or event using the configured strategies.
   ///
-  /// Throws [NotInitializedError] if the logger has not been initialized.
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
   /// [message] - The message to log.
   /// [event] - Optional. The specific log event associated with the message.
   /// [context] - Optional. Additional context data.
-  Future<void> info(
+  void info(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: message,
@@ -367,29 +425,24 @@ class StrategicLogger {
       context: context,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
   /// Logs an error using the configured strategies.
   ///
-  /// Throws [NotInitializedError] if the logger has not been initialized.
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
   /// [error] - The error object to log.
   /// [stackTrace] - The stack trace associated with the error.
   /// [event] - Optional. The specific log event associated with the error.
   /// [context] - Optional. Additional context data.
-  Future<void> error(
+  void error(
     dynamic error, {
     StackTrace? stackTrace,
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: error,
@@ -399,29 +452,24 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
   /// Logs a fatal error using the configured strategies.
   ///
-  /// Throws [NotInitializedError] if the logger has not been initialized.
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
   /// [error] - The critical error object to log as fatal.
   /// [stackTrace] - The stack trace associated with the fatal error.
   /// [event] - Optional. The specific log event associated with the fatal error.
   /// [context] - Optional. Additional context data.
-  Future<void> fatal(
+  void fatal(
     dynamic error, {
     StackTrace? stackTrace,
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: error,
@@ -431,113 +479,20 @@ class StrategicLogger {
       stackTrace: stackTrace,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
-  /// Synchronous debug logging (compatibility with popular logger packages)
-  void debugSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    if (!_isInitialized) return;
-
-    final entry = LogEntry.fromParams(
-      message: message,
-      level: LogLevel.debug,
-      stackTrace: stackTrace,
-    );
-
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
-    _logQueue!.enqueue(entry);
-  }
-
-  /// Synchronous info logging (compatibility with popular logger packages)
-  void infoSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    if (!_isInitialized) return;
-
-    final entry = LogEntry.fromParams(
-      message: message,
-      level: LogLevel.info,
-      stackTrace: stackTrace,
-    );
-
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
-    _logQueue!.enqueue(entry);
-  }
-
-  /// Synchronous warning logging (compatibility with popular logger packages)
-  void warningSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    if (!_isInitialized) return;
-
-    final entry = LogEntry.fromParams(
-      message: message,
-      level: LogLevel.warning,
-      stackTrace: stackTrace,
-    );
-
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
-    _logQueue!.enqueue(entry);
-  }
-
-  /// Synchronous error logging (compatibility with popular logger packages)
-  void errorSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    if (!_isInitialized) return;
-
-    final entry = LogEntry.fromParams(
-      message: message,
-      level: LogLevel.error,
-      stackTrace: stackTrace,
-    );
-
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
-    _logQueue!.enqueue(entry);
-  }
-
-  /// Synchronous fatal logging (compatibility with popular logger packages)
-  void fatalSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    if (!_isInitialized) return;
-
-    final entry = LogEntry.fromParams(
-      message: message,
-      level: LogLevel.fatal,
-      stackTrace: stackTrace,
-    );
-
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
-    _logQueue!.enqueue(entry);
-  }
-
-  /// Synchronous verbose logging (alias for debug)
-  void verboseSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    debugSync(message, error, stackTrace);
-  }
-
-  /// Synchronous log method (alias for info)
-  void logSync(dynamic message, [dynamic error, StackTrace? stackTrace]) {
-    infoSync(message, error, stackTrace);
-  }
-
-  /// Logs a message with structured data
-  Future<void> logStructured(
+  /// Logs a message with structured data.
+  ///
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  void logStructured(
     LogLevel level,
     dynamic message, {
     Map<String, Object>? data,
     String? tag,
     DateTime? timestamp,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final event = LogEvent(
       eventName: tag ?? 'LOG',
@@ -551,21 +506,18 @@ class StrategicLogger {
       event: event,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
-  /// Adds debug level logging
-  Future<void> debug(
+  /// Adds debug level logging.
+  ///
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  void debug(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: message,
@@ -574,21 +526,18 @@ class StrategicLogger {
       context: context,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
-  /// Adds warning level logging
-  Future<void> warning(
+  /// Adds warning level logging.
+  ///
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  void warning(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    if (!_isInitialized) {
-      throw NotInitializedError();
-    }
+  }) {
+    _ensureInitialized();
 
     final entry = LogEntry.fromParams(
       message: message,
@@ -597,19 +546,18 @@ class StrategicLogger {
       context: context,
     );
 
-    if (_logQueue == null) {
-      throw NotInitializedError();
-    }
     _logQueue!.enqueue(entry);
   }
 
-  /// Adds verbose level logging (alias for debug)
-  Future<void> verbose(
+  /// Adds verbose level logging (alias for debug).
+  ///
+  /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  void verbose(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
-  }) async {
-    await debug(message, event: event, context: context);
+  }) {
+    debug(message, event: event, context: context);
   }
 
   /// Forces flush of all queued logs
@@ -656,6 +604,7 @@ class StrategicLogger {
       // Ignore errors during dispose
     }
     _isInitialized = false;
+    _isAutoInitialized = false;
   }
 
   /// Prints initialization details of the logger, including whether it was a reconfiguration.

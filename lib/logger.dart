@@ -70,16 +70,6 @@ export 'src/strategies/crashlytics/firebase_crashlytics_log_strategy.dart';
 /// lead to inconsistent logging behavior.
 export 'src/errors/alread_initialized_error.dart';
 
-/// Error thrown when operations are attempted on an uninitialized logger.
-///
-/// This exception ensures that the logger is properly set up before use, guarding
-/// against runtime errors due to misconfiguration or sequence errors in initialization.
-export 'src/errors/not_initialized_error.dart';
-
-// Modern features
-/// Compatibility wrapper for popular logger packages
-export 'src/compatibility/logger_sync_compatibility.dart';
-
 /// Modern console formatter with colors and emojis
 export 'src/console/modern_console_formatter.dart';
 
@@ -101,13 +91,3 @@ export 'src/strategies/newrelic/newrelic_log_strategy.dart';
 
 /// Log event specifically tailored for New Relic
 export 'src/strategies/newrelic/newrelic_log_event.dart';
-
-// MCP & AI Integration (v1.1.0)
-/// Model Context Protocol (MCP) Server for Strategic Logger
-export 'src/mcp/mcp_server.dart';
-
-/// MCP Log Strategy for AI agent integration
-export 'src/mcp/mcp_log_strategy.dart';
-
-/// AI Log Strategy for intelligent log analysis
-export 'src/ai/ai_log_strategy.dart';

@@ -46,11 +46,11 @@ void main() async {
       enableModernConsole: true,
     );
 
-    // Example: Log with structured context
-    await logger.info(
+    // Example: Log with structured context - no await needed in v3.0.0
+    logger.info(
       'Strategic Logger initialized successfully',
       context: {
-        'appVersion': '1.4.0',
+        'appVersion': '3.0.0',
         'platform': 'flutter',
         'initializationTime': DateTime.now().toIso8601String(),
       },
