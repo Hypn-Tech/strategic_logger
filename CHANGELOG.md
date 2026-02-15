@@ -1,3 +1,7 @@
+# 3.0.1
+
+- Updated README ASCII banner to match actual logger output.
+
 # 3.0.0
 
 ## Auto-Init & Synchronous API - Strategic Logger 3.0.0
