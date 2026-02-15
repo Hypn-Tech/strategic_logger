@@ -1,5 +1,11 @@
 export 'src/strategic_logger.dart';
 
+/// Log entry data class used by all strategies.
+///
+/// Contains message, level, timestamp, context, event, and stack trace.
+/// Strategies receive this complete entry for formatting and routing.
+export 'src/core/log_queue.dart' show LogEntry;
+
 /// Base class for all log strategies.
 ///
 /// Extend this class to create custom log strategies. It defines the essential methods

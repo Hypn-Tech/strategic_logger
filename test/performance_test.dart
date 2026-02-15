@@ -135,10 +135,7 @@ void main() {
             },
           };
 
-          logger.info(
-            'Memory pressure test log $i',
-            context: largeContext,
-          );
+          logger.info('Memory pressure test log $i', context: largeContext);
         }
 
         logger.flush();
@@ -419,10 +416,7 @@ void main() {
             },
           };
 
-          logger.info(
-            'Memory stress test log $i',
-            context: massiveContext,
-          );
+          logger.info('Memory stress test log $i', context: massiveContext);
         }
 
         logger.flush();
@@ -634,10 +628,7 @@ void main() {
             },
           };
 
-          logger.info(
-            'Complex context test log $i',
-            context: complexContext,
-          );
+          logger.info('Complex context test log $i', context: complexContext);
         }
 
         logger.flush();

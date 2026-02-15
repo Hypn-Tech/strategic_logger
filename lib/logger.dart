@@ -1,5 +1,23 @@
 export 'src/strategic_logger.dart';
 
+/// Shorthand aliases for common logging methods (d, i, w, e, f).
+///
+/// Provides single-letter convenience methods inspired by the `logger` package.
+export 'src/extensions/shorthand_extension.dart';
+
+/// Named logger for organizing logs by module or component.
+///
+/// Create named loggers via `logger.named('auth')`. The name is
+/// automatically injected into context and displayed as a prefix in console.
+export 'src/named_logger.dart';
+
+/// Log entry data class used by all strategies.
+///
+/// This class encapsulates all information needed for logging, including
+/// the message, log level, timestamp, optional event, context map, and stack trace.
+/// Use this when creating custom strategies that extend [LogStrategy].
+export 'src/core/log_queue.dart' show LogEntry;
+
 /// Enum defining various levels of logging.
 ///
 /// This enum is used throughout the logging system to set the minimum level of messages
@@ -68,7 +86,7 @@ export 'src/strategies/crashlytics/firebase_crashlytics_log_strategy.dart';
 ///
 /// This exception helps prevent accidental reconfiguration of the logger which might
 /// lead to inconsistent logging behavior.
-export 'src/errors/alread_initialized_error.dart';
+export 'src/errors/already_initialized_error.dart';
 
 /// Modern console formatter with colors and emojis
 export 'src/console/modern_console_formatter.dart';
@@ -78,6 +96,13 @@ export 'src/console/modern_console_formatter.dart';
 /// Use this to check if the current terminal supports ANSI colors,
 /// or to force enable/disable colors for testing.
 export 'src/console/terminal_capabilities.dart';
+
+/// Base class for HTTP-based logging strategies.
+///
+/// Extend this class to create custom strategies that send logs to remote
+/// HTTP endpoints. Provides shared batch processing, retry logic, and
+/// resource management.
+export 'src/strategies/http_log_strategy.dart';
 
 // New strategies
 /// Strategy for logging messages to Datadog

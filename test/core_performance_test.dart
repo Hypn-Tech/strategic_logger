@@ -136,10 +136,7 @@ void main() {
             },
           };
 
-          logger.info(
-            'Memory pressure test log $i',
-            context: largeContext,
-          );
+          logger.info('Memory pressure test log $i', context: largeContext);
         }
 
         logger.flush();

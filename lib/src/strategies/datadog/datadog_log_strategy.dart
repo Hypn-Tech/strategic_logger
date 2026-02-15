@@ -1,13 +1,10 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:io';
 
 import '../../core/isolate_manager.dart';
 import '../../core/log_queue.dart';
-import '../../core/performance_monitor.dart';
 import '../../enums/log_level.dart';
-import '../log_strategy.dart';
+import '../http_log_strategy.dart';
 
 /// A [LogStrategy] implementation that sends logs to Datadog using the v2 API.
 ///
@@ -32,25 +29,32 @@ import '../log_strategy.dart';
 ///   enableCompression: true, // Default: true
 /// );
 /// await logger.initialize(strategies: [datadogStrategy]);
-/// await logger.log("Application started.", context: {'userId': 123});
+/// logger.log("Application started.", context: {'userId': 123});
 /// ```
-class DatadogLogStrategy extends LogStrategy {
+class DatadogLogStrategy extends HttpLogStrategy {
+  /// Your Datadog API key.
   final String apiKey;
-  final String service;
-  final String env;
-  final String? host;
-  final String? source;
-  final String? tags;
-  final String datadogUrl;
-  final bool enableCompression;
-  final int batchSize;
-  final Duration batchTimeout;
-  final int maxRetries;
-  final Duration retryDelay;
 
-  final List<Map<String, dynamic>> _batch = [];
-  Timer? _batchTimer;
-  final HttpClient _httpClient = HttpClient();
+  /// Service name for the logs.
+  final String service;
+
+  /// Environment name (e.g., 'production', 'staging').
+  final String env;
+
+  /// Host name (optional, defaults to platform hostname).
+  final String? host;
+
+  /// Source name (optional, defaults to 'dart').
+  final String? source;
+
+  /// Additional tags as comma-separated string (e.g., 'team:mobile,version:1.0.0').
+  final String? tags;
+
+  /// Datadog API URL (defaults to v2 endpoint for US region).
+  final String datadogUrl;
+
+  /// Enable gzip compression for reduced network overhead.
+  final bool enableCompression;
 
   /// Constructs a [DatadogLogStrategy].
   ///
@@ -59,7 +63,7 @@ class DatadogLogStrategy extends LogStrategy {
   /// [env] - Environment name (required)
   /// [host] - Host name (optional, defaults to platform hostname)
   /// [source] - Source name (optional, defaults to 'dart')
-  /// [tags] - Additional tags as comma-separated string (optional, e.g., 'team:mobile,version:1.0.0')
+  /// [tags] - Additional tags as comma-separated string (optional)
   /// [datadogUrl] - Datadog API URL (defaults to v2 endpoint for US region)
   /// [enableCompression] - Enable gzip compression (default: true)
   /// [batchSize] - Number of logs to batch before sending (default: 100)
@@ -79,78 +83,67 @@ class DatadogLogStrategy extends LogStrategy {
     this.tags,
     this.datadogUrl = 'https://http-intake.logs.datadoghq.com/api/v2/logs',
     this.enableCompression = true,
-    this.batchSize = 100,
-    this.batchTimeout = const Duration(seconds: 5),
-    this.maxRetries = 3,
-    this.retryDelay = const Duration(seconds: 1),
-    bool useIsolate = true, // Default: TRUE (batch + compression are heavy)
+    super.batchSize = 100,
+    super.batchTimeout = const Duration(seconds: 5),
+    super.maxRetries = 3,
+    super.retryDelay = const Duration(seconds: 1),
+    super.useIsolate = true,
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-  }) : super(useIsolate: useIsolate) {
-    _startBatchTimer();
+  });
+
+  @override
+  String get strategyName => 'DatadogLogStrategy';
+
+  @override
+  String get endpoint => datadogUrl;
+
+  @override
+  Map<String, String> get headers => {'DD-API-KEY': apiKey};
+
+  @override
+  Map<String, dynamic> formatLogEntry(LogEntry entry) {
+    return _createLogEntry(entry);
   }
 
-  /// Starts the batch timer for automatic log sending
-  void _startBatchTimer() {
-    _batchTimer = Timer.periodic(batchTimeout, (_) {
-      if (_batch.isNotEmpty) {
-        _sendBatch();
+  @override
+  Future<({List<int> body, Map<String, String> extraHeaders})> prepareBatchBody(
+    List<Map<String, dynamic>> batch,
+  ) async {
+    if (useIsolate) {
+      try {
+        final prepared = await isolateManager.prepareBatch(
+          batch: batch,
+          compress: enableCompression,
+        );
+        final body = (prepared['body'] as List).cast<int>();
+        final extraHeaders = <String, String>{};
+        if (prepared['isCompressed'] == true) {
+          extraHeaders['Content-Encoding'] = 'gzip';
+        }
+        return (body: body, extraHeaders: extraHeaders);
+      } catch (_) {
+        // Fallback to direct processing
       }
-    });
-  }
+    }
 
-  /// Logs a message or event to Datadog
-  @override
-  Future<void> log(LogEntry entry) async {
-    await _logToDatadog(entry);
-  }
-
-  /// Logs an info message to Datadog
-  @override
-  Future<void> info(LogEntry entry) async {
-    await _logToDatadog(entry);
-  }
-
-  /// Logs an error to Datadog
-  @override
-  Future<void> error(LogEntry entry) async {
-    await _logToDatadog(entry);
-  }
-
-  /// Logs a fatal error to Datadog
-  @override
-  Future<void> fatal(LogEntry entry) async {
-    await _logToDatadog(entry);
-  }
-
-  /// Internal method to log to Datadog
-  Future<void> _logToDatadog(LogEntry entry) async {
-    try {
-      if (!shouldLog(event: entry.event)) return;
-
-      final logEntry = _createLogEntry(entry);
-      _batch.add(logEntry);
-
-      // Send batch if it reaches the batch size
-      if (_batch.length >= batchSize) {
-        await _sendBatch();
-      }
-    } catch (e, stack) {
-      developer.log(
-        'Error in DatadogLogStrategy: $e',
-        name: 'DatadogLogStrategy',
-        error: e,
-        stackTrace: stack,
+    final jsonBody = jsonEncode(batch);
+    final extraHeaders = <String, String>{};
+    if (enableCompression) {
+      final encoder = GZipCodec();
+      extraHeaders['Content-Encoding'] = 'gzip';
+      return (
+        body: encoder.encode(utf8.encode(jsonBody)),
+        extraHeaders: extraHeaders,
       );
     }
+    return (body: utf8.encode(jsonBody), extraHeaders: extraHeaders);
   }
 
-  /// Creates a log entry in Datadog v2 format
+  /// Creates a log entry in Datadog v2 format.
   Map<String, dynamic> _createLogEntry(LogEntry entry) {
-    // Get hostname (use provided host or try to get system hostname)
     final hostname = host ?? _getHostname();
 
-    // Build the base log entry in Datadog v2 format
     final logEntry = <String, dynamic>{
       'ddsource': source ?? 'dart',
       'ddtags': _buildTags(),
@@ -161,15 +154,11 @@ class DatadogLogStrategy extends LogStrategy {
       'timestamp': entry.timestamp.toUtc().millisecondsSinceEpoch,
     };
 
-    // Add environment
     logEntry['env'] = env;
 
-    // Merge context from entry.context and event.parameters
-    // Context fields are added directly to the log object for indexing
+    // Add context fields directly (with prefix for reserved field conflicts)
     if (entry.context != null && entry.context!.isNotEmpty) {
-      // Add context fields directly to the log entry
       entry.context!.forEach((key, value) {
-        // Use a prefix to avoid conflicts with Datadog reserved fields
         if (!_isReservedField(key)) {
           logEntry[key] = value;
         } else {
@@ -178,7 +167,7 @@ class DatadogLogStrategy extends LogStrategy {
       });
     }
 
-    // Add event parameters if present
+    // Add event parameters (with different prefix for reserved field conflicts)
     if (entry.event?.parameters != null &&
         entry.event!.parameters!.isNotEmpty) {
       entry.event!.parameters!.forEach((key, value) {
@@ -190,7 +179,6 @@ class DatadogLogStrategy extends LogStrategy {
       });
     }
 
-    // Add event information
     if (entry.event != null) {
       logEntry['event_name'] = entry.event!.eventName;
       if (entry.event!.eventMessage != null) {
@@ -198,18 +186,15 @@ class DatadogLogStrategy extends LogStrategy {
       }
     }
 
-    // Add stack trace for errors
     if (entry.stackTrace != null) {
       logEntry['error.stack'] = entry.stackTrace.toString();
     }
 
-    // Add level for filtering
     logEntry['level'] = entry.level.name;
 
     return logEntry;
   }
 
-  /// Checks if a field name is a Datadog reserved field
   bool _isReservedField(String key) {
     const reservedFields = {
       'ddsource',
@@ -228,18 +213,15 @@ class DatadogLogStrategy extends LogStrategy {
     return reservedFields.contains(key.toLowerCase());
   }
 
-  /// Builds the ddtags string from tags parameter
   String _buildTags() {
     final tagList = <String>[];
     if (tags != null && tags!.isNotEmpty) {
       tagList.addAll(tags!.split(',').map((t) => t.trim()));
     }
-    // Add environment tag
     tagList.add('env:$env');
     return tagList.join(',');
   }
 
-  /// Gets the system hostname
   String _getHostname() {
     try {
       return Platform.localHostname;
@@ -248,7 +230,6 @@ class DatadogLogStrategy extends LogStrategy {
     }
   }
 
-  /// Maps LogLevel to Datadog status
   String _mapLogLevelToStatus(LogLevel level) {
     switch (level) {
       case LogLevel.debug:
@@ -262,117 +243,5 @@ class DatadogLogStrategy extends LogStrategy {
       case LogLevel.none:
         return 'info';
     }
-  }
-
-  /// Sends the current batch to Datadog
-  Future<void> _sendBatch() async {
-    if (_batch.isEmpty) return;
-
-    final batchToSend = List<Map<String, dynamic>>.from(_batch);
-    _batch.clear();
-
-    await performanceMonitor.measureOperation('sendDatadogBatch', () async {
-      await _sendBatchWithRetry(batchToSend);
-    });
-  }
-
-  /// Sends batch with retry logic
-  Future<void> _sendBatchWithRetry(List<Map<String, dynamic>> batch) async {
-    int attempts = 0;
-
-    while (attempts < maxRetries) {
-      try {
-        await _sendBatchToDatadog(batch);
-        return; // Success
-      } catch (e) {
-        attempts++;
-        if (attempts >= maxRetries) {
-          developer.log(
-            'Failed to send batch to Datadog after $maxRetries attempts: $e',
-            name: 'DatadogLogStrategy',
-            error: e,
-          );
-          rethrow;
-        }
-
-        // Wait before retry with exponential backoff
-        await Future.delayed(retryDelay * attempts);
-      }
-    }
-  }
-
-  /// Sends batch to Datadog v2 API with optional gzip compression
-  Future<void> _sendBatchToDatadog(List<Map<String, dynamic>> batch) async {
-    final request = await _httpClient.postUrl(Uri.parse(datadogUrl));
-
-    // Set headers
-    request.headers.set('Content-Type', 'application/json');
-    request.headers.set('DD-API-KEY', apiKey);
-
-    List<int> bodyBytes;
-
-    if (useIsolate) {
-      // Prepare batch in isolate (JSON + optional compression)
-      try {
-        final prepared = await isolateManager.prepareBatch(
-          batch: batch,
-          compress: enableCompression,
-        );
-        bodyBytes = (prepared['body'] as List).cast<int>();
-        if (prepared['isCompressed'] == true) {
-          request.headers.set('Content-Encoding', 'gzip');
-        }
-      } catch (e) {
-        // Fallback to main thread processing
-        bodyBytes = _prepareBatchDirect(batch);
-        if (enableCompression) {
-          request.headers.set('Content-Encoding', 'gzip');
-        }
-      }
-    } else {
-      // Direct processing on main thread
-      bodyBytes = _prepareBatchDirect(batch);
-      if (enableCompression) {
-        request.headers.set('Content-Encoding', 'gzip');
-      }
-    }
-
-    // Write body
-    request.contentLength = bodyBytes.length;
-    request.add(bodyBytes);
-    final response = await request.close();
-
-    // Read response to ensure connection is closed
-    await response.drain();
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Datadog API returned status ${response.statusCode}: ${response.reasonPhrase}',
-      );
-    }
-  }
-
-  /// Prepares batch directly on main thread (fallback or when useIsolate=false)
-  List<int> _prepareBatchDirect(List<Map<String, dynamic>> batch) {
-    final jsonBody = jsonEncode(batch);
-    if (enableCompression) {
-      final encoder = GZipCodec();
-      return encoder.encode(utf8.encode(jsonBody));
-    }
-    return utf8.encode(jsonBody);
-  }
-
-  /// Forces sending of all pending logs
-  Future<void> flush() async {
-    if (_batch.isNotEmpty) {
-      await _sendBatch();
-    }
-  }
-
-  /// Disposes the strategy and cleans up resources
-  void dispose() {
-    _batchTimer?.cancel();
-    _httpClient.close();
-    flush();
   }
 }

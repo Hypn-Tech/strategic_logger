@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:strategic_logger/logger_extension.dart';
 import '../../core/isolate_manager.dart';
-import '../../core/log_queue.dart';
 import '../../strategies/sentry/sentry_log_event.dart';
 
 /// A [LogStrategy] implementation that logs messages and errors to Sentry.
@@ -36,8 +35,9 @@ class SentryLogStrategy extends LogStrategy {
   SentryLogStrategy({
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-    bool useIsolate = true, // Default: TRUE (context serialization can be heavy)
-  }) : super(useIsolate: useIsolate);
+    super.useIsolate =
+        true, // Default: TRUE (context serialization can be heavy)
+  });
 
   /// Logs a message or a structured event to Sentry.
   ///

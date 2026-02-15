@@ -7,8 +7,9 @@ import 'core/log_queue.dart';
 import 'core/performance_monitor.dart';
 import 'enums/log_level.dart';
 
-import 'errors/alread_initialized_error.dart';
+import 'errors/already_initialized_error.dart';
 import 'events/log_event.dart';
+import 'named_logger.dart';
 import 'strategies/console/console_log_strategy.dart';
 import 'strategies/log_strategy.dart';
 
@@ -144,6 +145,7 @@ class StrategicLogger {
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring. Defaults to true.
   /// [enableModernConsole] - Whether to enable modern console formatting. Defaults to true.
   /// [projectName] - Custom project name to display in the banner. If not provided, preserves the previous value.
+  /// [showBanner] - Whether to display the initialization banner. Defaults to true.
   Future<void> reconfigure({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
@@ -151,6 +153,7 @@ class StrategicLogger {
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
     String? projectName,
+    bool showBanner = true,
   }) async {
     await logger._initialize(
       strategies: strategies,
@@ -160,6 +163,7 @@ class StrategicLogger {
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
       projectName: projectName,
+      showBanner: showBanner,
     );
   }
 
@@ -175,6 +179,7 @@ class StrategicLogger {
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring. Defaults to true.
   /// [enableModernConsole] - Whether to enable modern console formatting. Defaults to true.
   /// [projectName] - Custom project name to display in the banner. If not provided, uses default.
+  /// [showBanner] - Whether to display the initialization banner. Defaults to true.
   Future<void> initialize({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
@@ -183,6 +188,7 @@ class StrategicLogger {
     bool enableModernConsole = true,
     bool force = false, // Allow re-initialization for testing
     String? projectName,
+    bool showBanner = true,
   }) async {
     // Auto-detect platform support for isolates
     final shouldUseIsolates = useIsolates ?? _isIsolateSupported();
@@ -198,6 +204,7 @@ class StrategicLogger {
       enablePerformanceMonitoring: enablePerformanceMonitoring,
       enableModernConsole: enableModernConsole,
       projectName: projectName,
+      showBanner: showBanner,
     );
   }
 
@@ -212,6 +219,7 @@ class StrategicLogger {
   /// [enablePerformanceMonitoring] - Whether to enable performance monitoring.
   /// [enableModernConsole] - Whether to enable modern console formatting.
   /// [projectName] - Custom project name to display in the banner.
+  /// [showBanner] - Whether to display the initialization banner.
   Future<StrategicLogger> _initialize({
     List<LogStrategy>? strategies,
     LogLevel level = LogLevel.none,
@@ -220,6 +228,7 @@ class StrategicLogger {
     bool enablePerformanceMonitoring = true,
     bool enableModernConsole = true,
     String? projectName,
+    bool showBanner = true,
   }) async {
     // Only update project name if a new one is provided
     if (projectName != null) {
@@ -299,7 +308,9 @@ class StrategicLogger {
       // Always clear auto-init flag on explicit initialization
       _isAutoInitialized = false;
 
-      _printStrategicLoggerInit(isReconfiguration: isReconfiguration);
+      if (showBanner) {
+        _printStrategicLoggerInit(isReconfiguration: isReconfiguration);
+      }
     }
     return logger;
   }
@@ -380,22 +391,31 @@ class StrategicLogger {
     }
   }
 
+  /// Resolves a message that may be a lazy closure.
+  ///
+  /// If [message] is a `Function`, it is called and the return value is used.
+  /// This enables lazy evaluation: `logger.debug(() => 'expensive ${query()}')`
+  /// where the closure is only evaluated if the message is actually logged.
+  dynamic _resolveMessage(dynamic message) {
+    if (message is Function) {
+      return message();
+    }
+    return message;
+  }
+
   /// Logs a message or event using the configured strategies.
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
-  /// [message] - The message to log.
+  /// [message] - The message to log. Can be a `String`, any object, or a
+  ///   `Function` returning the message (lazy evaluation).
   /// [event] - Optional. The specific log event associated with the message.
   /// [context] - Optional. Additional context data.
-  void log(
-    dynamic message, {
-    LogEvent? event,
-    Map<String, Object>? context,
-  }) {
+  void log(dynamic message, {LogEvent? event, Map<String, Object>? context}) {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: message,
+      message: _resolveMessage(message),
       level: LogLevel.info,
       event: event,
       context: context,
@@ -408,18 +428,15 @@ class StrategicLogger {
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
-  /// [message] - The message to log.
+  /// [message] - The message to log. Can be a `String`, any object, or a
+  ///   `Function` returning the message (lazy evaluation).
   /// [event] - Optional. The specific log event associated with the message.
   /// [context] - Optional. Additional context data.
-  void info(
-    dynamic message, {
-    LogEvent? event,
-    Map<String, Object>? context,
-  }) {
+  void info(dynamic message, {LogEvent? event, Map<String, Object>? context}) {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: message,
+      message: _resolveMessage(message),
       level: LogLevel.info,
       event: event,
       context: context,
@@ -432,7 +449,8 @@ class StrategicLogger {
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
-  /// [error] - The error object to log.
+  /// [error] - The error object to log. Can be a `String`, any object, or a
+  ///   `Function` returning the error (lazy evaluation).
   /// [stackTrace] - The stack trace associated with the error.
   /// [event] - Optional. The specific log event associated with the error.
   /// [context] - Optional. Additional context data.
@@ -445,7 +463,7 @@ class StrategicLogger {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: error,
+      message: _resolveMessage(error),
       level: LogLevel.error,
       event: event,
       context: context,
@@ -459,7 +477,8 @@ class StrategicLogger {
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
   ///
-  /// [error] - The critical error object to log as fatal.
+  /// [error] - The critical error object to log as fatal. Can be a `String`,
+  ///   any object, or a `Function` returning the error (lazy evaluation).
   /// [stackTrace] - The stack trace associated with the fatal error.
   /// [event] - Optional. The specific log event associated with the fatal error.
   /// [context] - Optional. Additional context data.
@@ -472,7 +491,7 @@ class StrategicLogger {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: error,
+      message: _resolveMessage(error),
       level: LogLevel.fatal,
       event: event,
       context: context,
@@ -485,6 +504,8 @@ class StrategicLogger {
   /// Logs a message with structured data.
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  ///
+  /// [message] - The message to log. Supports lazy evaluation via closures.
   void logStructured(
     LogLevel level,
     dynamic message, {
@@ -494,14 +515,16 @@ class StrategicLogger {
   }) {
     _ensureInitialized();
 
+    final resolvedMessage = _resolveMessage(message);
+
     final event = LogEvent(
       eventName: tag ?? 'LOG',
-      eventMessage: message.toString(),
+      eventMessage: resolvedMessage.toString(),
       parameters: data,
     );
 
     final entry = LogEntry.fromParams(
-      message: message,
+      message: resolvedMessage,
       level: level,
       event: event,
     );
@@ -512,15 +535,23 @@ class StrategicLogger {
   /// Adds debug level logging.
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
-  void debug(
-    dynamic message, {
-    LogEvent? event,
-    Map<String, Object>? context,
-  }) {
+  ///
+  /// [message] - The message to log. Can be a `String`, any object, or a
+  ///   `Function` returning the message (lazy evaluation).
+  ///
+  /// Example:
+  /// ```dart
+  /// // Eager (always evaluates)
+  /// logger.debug('Users: ${expensiveQuery()}');
+  ///
+  /// // Lazy (only evaluates if debug level is active)
+  /// logger.debug(() => 'Users: ${expensiveQuery()}');
+  /// ```
+  void debug(dynamic message, {LogEvent? event, Map<String, Object>? context}) {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: message,
+      message: _resolveMessage(message),
       level: LogLevel.debug,
       event: event,
       context: context,
@@ -532,6 +563,8 @@ class StrategicLogger {
   /// Adds warning level logging.
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  ///
+  /// [message] - The message to log. Supports lazy evaluation via closures.
   void warning(
     dynamic message, {
     LogEvent? event,
@@ -540,7 +573,7 @@ class StrategicLogger {
     _ensureInitialized();
 
     final entry = LogEntry.fromParams(
-      message: message,
+      message: _resolveMessage(message),
       level: LogLevel.warning,
       event: event,
       context: context,
@@ -552,12 +585,46 @@ class StrategicLogger {
   /// Adds verbose level logging (alias for debug).
   ///
   /// Auto-initializes with [ConsoleLogStrategy] if not yet initialized.
+  ///
+  /// [message] - The message to log. Supports lazy evaluation via closures.
   void verbose(
     dynamic message, {
     LogEvent? event,
     Map<String, Object>? context,
   }) {
     debug(message, event: event, context: context);
+  }
+
+  /// Creates a named logger that automatically includes the logger name in context.
+  ///
+  /// Named loggers are useful for organizing logs by module or component.
+  /// The name is injected as `_loggerName` in the context map and displayed
+  /// as a prefix in console output.
+  ///
+  /// Example:
+  /// ```dart
+  /// final authLogger = logger.named('auth');
+  /// final paymentLogger = logger.named('payment');
+  ///
+  /// authLogger.info('User logged in');      // [auth] User logged in
+  /// paymentLogger.error('Payment failed');  // [payment] Payment failed
+  /// ```
+  NamedLogger named(String name) => NamedLogger(this, name);
+
+  /// Listens to all log entries for custom processing.
+  ///
+  /// Provides stream-based extensibility inspired by Dart's `logging` package
+  /// `onRecord.listen()` pattern. Use this to build custom log consumers,
+  /// dashboards, or integrations without creating a full strategy.
+  ///
+  /// Example:
+  /// ```dart
+  /// logger.listen((entry) {
+  ///   myAnalytics.track(entry.message, entry.mergedContext);
+  /// });
+  /// ```
+  StreamSubscription<LogEntry> listen(void Function(LogEntry) onData) {
+    return logStream.listen(onData);
   }
 
   /// Forces flush of all queued logs

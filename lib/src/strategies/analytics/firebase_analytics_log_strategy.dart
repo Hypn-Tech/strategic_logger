@@ -5,7 +5,6 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:strategic_logger/logger_extension.dart';
 
 import '../../core/isolate_manager.dart';
-import '../../core/log_queue.dart';
 import 'firebase_analytics_log_event.dart';
 
 /// A [LogStrategy] implementation that utilizes Firebase Analytics to log events, errors, and fatal incidents.
@@ -39,8 +38,9 @@ class FirebaseAnalyticsLogStrategy extends LogStrategy {
   FirebaseAnalyticsLogStrategy({
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-    bool useIsolate = true, // Default: TRUE (context serialization can be heavy)
-  }) : super(useIsolate: useIsolate);
+    super.useIsolate =
+        true, // Default: TRUE (context serialization can be heavy)
+  });
 
   /// Logs a message or a structured event to Firebase Analytics.
   ///

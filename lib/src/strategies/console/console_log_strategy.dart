@@ -53,7 +53,7 @@ class ConsoleLogStrategy extends LogStrategy {
   ConsoleLogStrategy({
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-    bool useIsolate = false, // Console: default FALSE (lightweight operation)
+    super.useIsolate = false, // Console: default FALSE (lightweight operation)
     bool useModernFormatting = true,
     bool useColors = true,
     bool autoDetectColors = true,
@@ -64,8 +64,7 @@ class ConsoleLogStrategy extends LogStrategy {
            ? (useColors && TerminalCapabilities.supportsAnsiColors)
            : useColors,
        _showTimestamp = showTimestamp,
-       _showContext = showContext,
-       super(useIsolate: useIsolate);
+       _showContext = showContext;
 
   /// Logs a message or a structured event to the console.
   ///
@@ -162,9 +161,22 @@ class ConsoleLogStrategy extends LogStrategy {
 
   /// Formats a log entry directly without using isolate
   String _formatDirect(LogEntry entry, Map<String, dynamic> mergedContext) {
+    // Extract logger name for prefix display
+    final loggerName = mergedContext['_loggerName'] as String?;
+
+    // Build the display message with optional named logger prefix
+    final displayMessage = loggerName != null
+        ? '[$loggerName] ${entry.message}'
+        : entry.message.toString();
+
+    // Remove _loggerName from context display (it's shown as prefix)
+    final displayContext = loggerName != null
+        ? (Map<String, dynamic>.from(mergedContext)..remove('_loggerName'))
+        : mergedContext;
+
     return modernConsoleFormatter.formatLog(
       level: entry.level,
-      message: entry.message.toString(),
+      message: displayMessage,
       timestamp: entry.timestamp,
       event: entry.event,
       stackTrace: entry.stackTrace,
@@ -172,7 +184,7 @@ class ConsoleLogStrategy extends LogStrategy {
       useEmojis: false, // Disabled because we have formatted header
       showTimestamp: _showTimestamp,
       showContext: _showContext,
-      context: mergedContext.isNotEmpty ? mergedContext : null,
+      context: displayContext.isNotEmpty ? displayContext : null,
     );
   }
 

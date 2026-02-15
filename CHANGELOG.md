@@ -1,3 +1,43 @@
+# 4.0.0
+
+## Top Package DX Improvements - Strategic Logger 4.0.0
+
+### New Features
+
+- **`handleLog()` method** - Override a single method for uniform handling of all log levels. Custom strategies now need only 1 override instead of 4+. Fully backward compatible - existing strategies continue to work without changes.
+- **Named loggers** - `logger.named('auth')` creates a logger that injects the module name into context and displays it as a prefix in console output.
+- **Lazy evaluation** - Pass closures to avoid expensive computations: `logger.debug(() => 'Users: ${expensiveQuery()}')`. The closure is only evaluated if the message is actually logged.
+- **`listen()` method** - Stream-based extensibility: `logger.listen((entry) { ... })`. Inspired by Dart's `logging` package `onRecord.listen()` pattern.
+- **Shorthand aliases** - `logger.d()`, `i()`, `w()`, `e()`, `f()` for concise logging inspired by the `logger` package.
+- **`HttpLogStrategy` base class** - Shared batch processing, retry logic, and HTTP client management for custom HTTP strategies. Datadog and New Relic now extend this class.
+- **`LogEntry` exported** - `LogEntry` is now available from `package:strategic_logger/logger.dart` (no more `src/` imports needed).
+- **`showBanner` parameter** - Control the initialization banner: `logger.initialize(showBanner: false)`.
+
+### Improvements
+
+- **DRY context merging** - NewRelic strategy now uses `entry.mergedContext` instead of manual merging.
+- **Fixed filename typo** - `alread_initialized_error.dart` renamed to `already_initialized_error.dart`. Old file removed.
+- **Super parameters** - All strategy constructors converted to use Dart 3 super parameters.
+- **Removed unnecessary imports** - Cleaned up redundant `log_queue.dart` imports in strategies.
+- **DatadogLogStrategy** - Reduced from 378 to ~250 lines by extending `HttpLogStrategy`.
+- **NewRelicLogStrategy** - Reduced from 272 to ~145 lines by extending `HttpLogStrategy`.
+- **README reorganized** - Code-first structure with decision matrix, troubleshooting, and progressive disclosure.
+- **Example simplified** - Uses only `ConsoleLogStrategy` (no external dependencies required).
+- **Console named logger prefix** - Named loggers show as `[auth] Message` in console output.
+
+### Breaking Changes
+
+- **Removed `logMessage()` and `logError()`** - Legacy methods removed from `LogStrategy`. Use `handleLog(LogEntry)` or override `log()`/`info()`/`error()`/`fatal()` instead.
+- **Removed `alread_initialized_error.dart`** - Typo filename removed. Use `already_initialized_error.dart`.
+
+### Migration Notes
+
+- **New `handleLog()`** - Override a single method instead of the old `logMessage`/`logError` pair.
+- **Existing strategies** that override `log`/`info`/`error`/`fatal` bypass `handleLog()` automatically - no changes needed.
+- **`LogEntry` import** - Can now be imported from `logger.dart` instead of `src/core/log_queue.dart`.
+
+---
+
 # 3.0.1
 
 - Updated README ASCII banner to match actual logger output.

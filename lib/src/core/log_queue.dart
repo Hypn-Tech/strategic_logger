@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:meta/meta.dart';
-
 import '../enums/log_level.dart';
 import '../events/log_event.dart';
 
-/// A queue for managing log entries with backpressure control
-@internal
+/// A queue for managing log entries with backpressure control.
+///
+/// This is an internal implementation detail of StrategicLogger.
+/// External consumers should use [LogEntry] instead.
 class LogQueue {
   final Queue<LogEntry> _queue = Queue<LogEntry>();
   final StreamController<LogEntry> _controller =

@@ -23,7 +23,6 @@ class ModernConsoleFormatter {
   static const String _white = '\x1B[37m';
   static const String _gray = '\x1B[90m';
 
-
   // Icons for different log levels (simple and clean)
   static const Map<LogLevel, String> _levelIcons = {
     LogLevel.debug: '🔍',
@@ -43,7 +42,6 @@ class ModernConsoleFormatter {
     LogLevel.fatal: _red + _bold,
     LogLevel.none: _gray,
   };
-
 
   /// Formats a log message with modern styling
   String formatLog({

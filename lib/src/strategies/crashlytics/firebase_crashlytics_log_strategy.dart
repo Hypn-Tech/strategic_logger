@@ -4,7 +4,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:strategic_logger/logger_extension.dart';
 
 import '../../core/isolate_manager.dart';
-import '../../core/log_queue.dart';
 import 'firebase_crashlytics_log_event.dart';
 
 /// A [LogStrategy] implementation that logs messages and errors to Firebase Crashlytics.
@@ -37,8 +36,9 @@ class FirebaseCrashlyticsLogStrategy extends LogStrategy {
   FirebaseCrashlyticsLogStrategy({
     super.logLevel = LogLevel.none,
     super.supportedEvents,
-    bool useIsolate = true, // Default: TRUE (context serialization can be heavy)
-  }) : super(useIsolate: useIsolate);
+    super.useIsolate =
+        true, // Default: TRUE (context serialization can be heavy)
+  });
 
   /// Logs a message or a structured event to Firebase Crashlytics.
   ///
